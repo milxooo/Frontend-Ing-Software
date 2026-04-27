@@ -42,33 +42,13 @@ const ScheduleManager: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await generateScheduleProposals('santiago-123');
-      // Si el backend no devuelve datos reales aún, usamos mocks estructurados para US-05
-      setProposals(data.proposals || [
-        {
-          id: 'p1',
-          name: 'Propuesta A',
-          efficiency: 94,
-          items: [
-            { subject: 'Matemáticas Avanzadas', day: 'Lunes', startTime: '08:00', endTime: '10:00', isConflict: false, classroom: 'Aula 402', professor: 'Dr. Aris' },
-            { subject: 'Física II', day: 'Martes', startTime: '08:00', endTime: '09:30', isConflict: true, conflictReason: 'Zona Prohibida: Mantenimiento', classroom: 'Lab B' },
-            { subject: 'Diseño de Algoritmos', day: 'Martes', startTime: '10:00', endTime: '12:00', isConflict: false, classroom: 'Lab C' },
-            { subject: 'Historia Tecnológica', day: 'Miércoles', startTime: '11:00', endTime: '13:00', isConflict: false, classroom: 'Sala Magna' },
-            { subject: 'Criptografía I', day: 'Viernes', startTime: '14:00', endTime: '16:00', isConflict: false, classroom: 'Aula 102' }
-          ]
-        },
-        {
-          id: 'p2',
-          name: 'Propuesta B',
-          efficiency: 88,
-          items: [
-            { subject: 'Matemáticas Avanzadas', day: 'Miércoles', startTime: '08:00', endTime: '10:00', isConflict: false },
-            { subject: 'Física II', day: 'Jueves', startTime: '08:00', endTime: '09:30', isConflict: false },
-            { subject: 'Taller Innovación', day: 'Jueves', startTime: '10:00', endTime: '13:00', isConflict: true, conflictReason: 'Cruce con Tutoría' }
-          ]
-        }
-      ]);
+      // US-05: El backend envía un objeto con { proposals: Proposal[] }
+      if (data && data.proposals) {
+        setProposals(data.proposals);
+        setSelectedProposalIdx(0); // Seleccionamos la mejor por defecto
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error en US-05:', error);
     } finally {
       setIsLoading(false);
     }
@@ -90,35 +70,53 @@ const ScheduleManager: React.FC = () => {
     <div className="space-y-8 animate-fade-in relative">
       {/* US-05 Marker */}
       <div className="absolute -top-4 -right-4 bg-primary text-on-primary text-[10px] font-bold px-2 py-1 rounded-full shadow-lg z-50">
-        US-05 ACTIVE
+        US-05 IA ENGINE
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+      <div className="flex flex-col gap-6 mb-8">
         <div>
-          <h2 className="text-4xl font-display font-bold text-white mb-2">Visión Semanal</h2>
+          <h2 className="text-4xl font-display font-bold text-white mb-2">Selector de Propuestas</h2>
           <p className="text-on-surface-variant flex items-center gap-2">
             <span className="material-symbols-outlined text-sm text-indigo-400">psychology</span>
-            Optimización IA v4.2 para Ciclo 2024-B
+            IA ha generado 5 rutas óptimas basadas en tus restricciones.
           </p>
         </div>
         
-        <div className="glass-panel p-1 rounded-2xl flex items-center gap-1">
+        {/* US-05: Mapeo de Tarjetas de Propuestas */}
+        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
           {proposals.length > 0 ? (
             proposals.map((p, idx) => (
               <button 
-                key={p.id}
+                key={p.id || idx}
                 onClick={() => setSelectedProposalIdx(idx)}
-                className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                className={`flex-shrink-0 min-w-[200px] glass-panel p-5 rounded-2xl transition-all duration-300 text-left border-2 ${
                   selectedProposalIdx === idx 
-                    ? 'bg-primary-container text-on-primary-container shadow-lg' 
-                    : 'text-slate-400 hover:bg-white/5'
+                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10 scale-[1.02]' 
+                    : 'border-white/5 hover:border-white/20'
                 }`}
               >
-                {p.name}
+                <div className="flex justify-between items-start mb-3">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    selectedProposalIdx === idx ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    OPCIÓN {idx + 1}
+                  </span>
+                  {p.efficiency && (
+                    <span className="text-xs font-mono text-indigo-400 font-bold">{p.efficiency}%</span>
+                  )}
+                </div>
+                <h4 className={`text-sm font-bold mb-1 ${selectedProposalIdx === idx ? 'text-white' : 'text-slate-400'}`}>
+                  {p.name || `Propuesta IA-${idx + 1}`}
+                </h4>
+                <p className="text-[10px] text-slate-500 uppercase tracking-tighter">
+                  {p.items?.length || 0} Materias • 0 Conflictos
+                </p>
               </button>
             ))
           ) : (
-            <div className="px-6 py-2.5 text-slate-500 text-sm italic">Sin propuestas</div>
+            <div className="w-full glass-panel p-8 rounded-2xl text-center opacity-40">
+              Presiona "Generar Nueva Propuesta" para ver las opciones de la IA.
+            </div>
           )}
         </div>
       </div>
