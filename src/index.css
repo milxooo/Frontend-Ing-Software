@@ -107,3 +107,13 @@
 .active-ring {
   box-shadow: 0 0 0 2px rgba(192, 193, 255, 0.1);
 }
+
+.security-stamp {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #6366f1 100%);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+}
+
+@keyframes fall {
+  from { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}

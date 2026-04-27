@@ -40,10 +40,18 @@ export const confirmSwapMatch = async (matchId: string, studentId: string) => {
   return await response.json(); // Devuelve "PENDIENTE" o "APROBADO"
 };
 
-// US-11: Formalización Legal (Sello Digital)
+// US-11: Formalización Legal (Sello Digital y Registro Oficial)
 export const formalizeSwap = async (matchId: string) => {
-  const response = await api.post('/swaps/formalize', { matchId });
-  return response.data;
+  const response = await fetch(`http://localhost:3000/api/swaps/formalize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ matchId })
+  });
+  
+  if (!response.ok) throw new Error('Fallo en el registro oficial');
+  
+  // El backend devuelve el Hash de Transacción y el Sello Digital
+  return await response.json(); 
 };
 
 export default api;

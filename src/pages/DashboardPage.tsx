@@ -4,6 +4,7 @@ import ScheduleManager from '../features/schedule/ScheduleManager';
 import SwapMarket from '../features/marketplace/SwapMarket';
 import ProfileSettings from '../features/profile/ProfileSettings';
 import SyncHub from '../features/sync/SyncHub';
+import FormalizationCertificate from '../features/swaps/FormalizationCertificate';
 
 /**
  * OptimaAcademia Dashboard Page
@@ -66,6 +67,18 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
 
       case 'profile':
         return <ProfileSettings />;
+
+      case 'documents':
+        return (
+          <FormalizationCertificate 
+            matchId="SW-98234-MART"
+            studentA="Roberto A. Martínez"
+            studentB="Elena L. García"
+            subjectA="Criptografía I"
+            subjectB="Sistemas Distribuidos"
+            status="APROBADO"
+          />
+        );
 
       default:
         return (
