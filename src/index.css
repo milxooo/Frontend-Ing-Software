@@ -18,6 +18,20 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.glass-card {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glow-button {
+  box-shadow: 0 0 20px rgba(128, 131, 255, 0.3);
+}
+
+.glow-button:hover {
+  box-shadow: 0 0 35px rgba(128, 131, 255, 0.5);
+}
+
 * {
   margin: 0;
   padding: 0;
