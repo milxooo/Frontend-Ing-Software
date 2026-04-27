@@ -74,15 +74,16 @@ export default {
         "md": "16px"
       },
       fontFamily: {
-        "h2": ["Manrope", "sans-serif"],
+        "h2": ["Outfit", "sans-serif"],
         "mono": ["monospace"],
-        "h3": ["Manrope", "sans-serif"],
-        "display": ["Manrope", "sans-serif"],
+        "h3": ["Outfit", "sans-serif"],
+        "display": ["Outfit", "sans-serif"],
         "body-md": ["Inter", "sans-serif"],
         "label-md": ["Inter", "sans-serif"],
-        "h1": ["Manrope", "sans-serif"],
+        "h1": ["Outfit", "sans-serif"],
         "body-lg": ["Inter", "sans-serif"],
-        "manrope": ["Manrope", "sans-serif"]
+        "manrope": ["Manrope", "sans-serif"],
+        "sans": ["Inter", "sans-serif"]
       },
       fontSize: {
         "h2": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
