@@ -17,7 +17,7 @@ interface Subject {
 const SyncHub: React.FC = () => {
   const [studentId, setStudentId] = useState('');
   const [token, setToken] = useState('');
-  const [institution, setInstitution] = useState('sia');
+  const [institution, setInstitution] = useState('sap');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncData, setSyncData] = useState<Subject[]>([]);
@@ -30,9 +30,10 @@ const SyncHub: React.FC = () => {
     
     try {
       const data = await syncAcademicHistory(studentId, token);
-      setSyncData(data.subjects || []);
+      // US-02: El backend devuelve los datos en la propiedad 'records'
+      setSyncData(data.records || []);
     } catch (err: any) {
-      setError(err.message || 'Error en la sincronización. Verifica tus credenciales.');
+      setError(err.message || 'Error en la sincronización. Verifica tus credenciales del SAP.');
     } finally {
       setIsLoading(false);
       setToken(''); // Seguridad Local: Borramos el token de memoria
@@ -40,11 +41,10 @@ const SyncHub: React.FC = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Aprobada': return 'bg-green-500/10 text-green-400 border-green-500/20';
-      case 'En curso': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-    }
+    const s = status?.toLowerCase();
+    if (s === 'aprobada') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    if (s === 'reprobada') return 'bg-error/10 text-error border-error/20';
+    return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
   };
 
   const getIcon = (name: string) => {
@@ -62,7 +62,7 @@ const SyncHub: React.FC = () => {
       <div className="mb-12">
         <h2 className="text-6xl font-display font-black text-white mb-6 tracking-tighter">Sync Hub</h2>
         <p className="text-xl text-on-surface-variant leading-relaxed max-w-2xl">
-          Sincroniza tu progreso académico con los sistemas universitarios de forma segura y automatizada. 
+          Sincroniza tu progreso académico con el SAP de la Sergio Arboleda de forma segura. 
           <span className="text-primary font-bold ml-2">US-02 Protocol Active.</span>
         </p>
       </div>
@@ -76,7 +76,7 @@ const SyncHub: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-100">Configuración</h2>
             </div>
 
-            {/* Institution Selector */}
+            {/* Institution Selector (Solo Sergio Arboleda) */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-slate-400 block ml-1">Institución</label>
               <div className="relative group">
@@ -85,9 +85,7 @@ const SyncHub: React.FC = () => {
                   onChange={(e) => setInstitution(e.target.value)}
                   className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm text-slate-200 transition-all cursor-pointer"
                 >
-                  <option value="sia">SIA - Universidad Nacional</option>
-                  <option value="banner">Banner - Uniandes / Javeriana</option>
-                  <option value="moodle">Moodle Hub Standard</option>
+                  <option value="sap">SAP - Universidad Sergio Arboleda</option>
                 </select>
                 <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-hover:text-indigo-400 transition-colors">expand_more</span>
               </div>
