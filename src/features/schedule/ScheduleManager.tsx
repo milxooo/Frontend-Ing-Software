@@ -25,13 +25,13 @@ interface Proposal {
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión Blindada v3)
- * Blindaje total contra datos indefinidos y fallos de renderizado.
+ * US-05: Arquitecto de Horarios (Versión Ultra-Estable)
+ * Diseñada para sobrevivir a cualquier malformación de datos del Backend.
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [propuestaActiva, setPropuestaActiva] = useState<Proposal | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [showTooltip, setShowTooltip] = useState<{ x: number, y: number, text: string } | null>(null);
 
   const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -42,6 +42,11 @@ const ScheduleManager: React.FC = () => {
   ];
   const pxPerHour = 80;
   const startHour = 5;
+
+  const normalize = (text: string) => {
+    if (!text) return "";
+    return text.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
 
   const getSubjectColor = (name: string) => {
     const colors = [
@@ -57,106 +62,97 @@ const ScheduleManager: React.FC = () => {
     return colors[Math.abs(hash) % colors.length];
   };
 
-  const normalize = (text: string) => {
-    if (!text) return "";
-    return text.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const calculatePosition = (startTime?: string, endTime?: string) => {
+    if (!startTime || !endTime || !startTime.includes(':')) return { top: '0px', height: '0px' };
+    const [startH, startM] = startTime.split(':').map(Number);
+    const [endH, endM] = endTime.split(':').map(Number);
+    const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
+    const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
+    return { top: `${top}px`, height: `${height}px` };
   };
 
   const handleGenerate = async () => {
     setIsLoading(true);
     try {
       const data = await generateScheduleProposals('santiago-123');
-      if (data && Array.isArray(data.proposals)) {
+      if (data && Array.isArray(data.proposals) && data.proposals.length > 0) {
         setProposals(data.proposals);
-        if (data.proposals.length > 0) setPropuestaActiva(data.proposals[0]);
+        setActiveId(data.proposals[0].id || 'p0');
       }
     } catch (error) {
-      console.error('Error en US-05:', error);
+      console.error('Error Fatal US-05:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const calculatePosition = (startTime?: string, endTime?: string) => {
-    if (!startTime || !endTime || !startTime.includes(':')) return { top: '0px', height: '0px' };
-    try {
-      const [startH, startM] = startTime.split(':').map(Number);
-      const [endH, endM] = endTime.split(':').map(Number);
-      const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
-      const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
-      return { top: `${top}px`, height: `${height}px` };
-    } catch (e) {
-      return { top: '0px', height: '0px' };
-    }
-  };
+  const propuestaActiva = proposals.find(p => (p.id || 'p0') === activeId) || null;
 
   const renderScheduleBlocks = (day: string) => {
     if (!propuestaActiva || !Array.isArray(propuestaActiva.items)) return null;
     const targetDay = normalize(day);
 
-    return propuestaActiva.items.flatMap((subject) => {
-      if (!subject.schedule || !Array.isArray(subject.schedule)) return [];
+    return propuestaActiva.items.map((subject, idx) => {
+      if (!subject.schedule || !Array.isArray(subject.schedule)) return null;
       const colorStyles = getSubjectColor(subject.name);
       
-      return subject.schedule
-        .filter((s) => normalize(s.day || '') === targetDay)
-        .map((s, sIdx) => {
-          const pos = calculatePosition(s.startTime, s.endTime);
-          if (pos.height === '0px') return null;
-          return (
-            <div 
-              key={`${subject.name}-${sIdx}`}
-              className={`absolute left-1 right-1 rounded-xl p-3 flex flex-col justify-between transition-all duration-300 shadow-lg border-l-4 bg-gradient-to-br ${
-                subject.isConflict ? 'bg-error/20 border-error text-error z-20' : `${colorStyles} z-10`
-              }`}
-              style={{ top: pos.top, height: pos.height }}
-            >
-              <div className="overflow-hidden">
-                <h4 className="text-[10px] font-black uppercase truncate">{subject.name || 'S/N'}</h4>
-                <p className="text-[8px] opacity-70 mt-1 truncate">{subject.classroom || 'SAP SERGIO'}</p>
-              </div>
-              <div className="text-[9px] font-mono font-bold opacity-80">{s.startTime || '--:--'}</div>
-            </div>
-          );
-        });
+      return (
+        <React.Fragment key={`${subject.name}-${idx}`}>
+          {subject.schedule
+            .filter((s) => normalize(s.day || '') === targetDay)
+            .map((s, sIdx) => {
+              const pos = calculatePosition(s.startTime, s.endTime);
+              if (pos.height === '0px') return null;
+              return (
+                <div 
+                  key={sIdx}
+                  className={`absolute left-1 right-1 rounded-xl p-2 flex flex-col justify-between transition-all shadow-lg border-l-4 bg-gradient-to-br ${
+                    subject.isConflict ? 'bg-error/20 border-error text-error z-20' : `${colorStyles} z-10`
+                  }`}
+                  style={{ top: pos.top, height: pos.height }}
+                >
+                  <h4 className="text-[9px] font-black uppercase truncate">{subject.name || 'S/N'}</h4>
+                  <div className="text-[8px] font-mono font-bold opacity-80">{s.startTime}</div>
+                </div>
+              );
+            })}
+        </React.Fragment>
+      );
     });
   };
 
   return (
-    <div className="space-y-8 animate-fade-in relative pb-20">
+    <div className="space-y-8 animate-fade-in relative pb-20 max-w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
           <p className="text-on-surface-variant flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-indigo-400">auto_awesome</span>
-            Optimizador SAP | Sergio Arboleda v4.1
+            <span className="material-symbols-outlined text-sm text-indigo-400">security</span>
+            Malla Horaria Sergio Arboleda | Protocolo Seguro
           </p>
         </div>
 
         {propuestaActiva && (
-          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-md animate-slide-up">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="material-symbols-outlined text-primary animate-pulse">psychology</span>
-              <h4 className="text-xs font-bold text-primary uppercase tracking-tighter">AI Insight Breakdown</h4>
-            </div>
-            <p className="text-sm text-slate-200 leading-tight italic">
-              "{propuestaActiva.scoreBreakdown || `Ruta óptima con score del ${(propuestaActiva.score || 0).toFixed(1)}%.`}"
+          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-md">
+            <h4 className="text-[10px] font-bold text-primary uppercase mb-1">AI Insights</h4>
+            <p className="text-xs text-slate-200 italic">
+              "{propuestaActiva.scoreBreakdown || `Optimización lograda al ${(propuestaActiva.score || 0).toFixed(1)}%`}"
             </p>
           </div>
         )}
       </div>
 
-      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl min-h-[600px]">
+      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl min-h-[500px]">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
             <span className="material-symbols-outlined text-5xl text-primary animate-spin">psychology</span>
           </div>
         )}
 
-        <div className="grid grid-cols-8 h-[1520px]">
+        <div className="grid grid-cols-8 h-[1520px] overflow-y-auto">
           <div className="col-span-1 border-r border-white/5 pt-16">
             {hours.map(h => (
-              <div key={h} className="h-[80px] flex items-center justify-end pr-4 text-slate-600 font-mono text-[10px] border-b border-white/5">{h}</div>
+              <div key={h} className="h-[80px] flex items-center justify-end pr-4 text-slate-600 font-mono text-[9px] border-b border-white/5">{h}</div>
             ))}
           </div>
 
@@ -173,31 +169,31 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-12 space-y-6">
+      <div className="mt-8 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-400">explore</span>
-          Rutas de Optimización
+          <span className="material-symbols-outlined text-indigo-400">sort</span>
+          Propuestas del SAP
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
           {proposals.map((p, idx) => (
             <button 
               key={p.id || idx}
-              onClick={() => setPropuestaActiva(p)}
-              className={`p-5 rounded-2xl transition-all duration-300 text-left border-2 ${
-                propuestaActiva?.id === p.id 
-                  ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/10' 
-                  : 'border-white/5 bg-slate-900/40 hover:border-white/20'
+              onClick={() => setActiveId(p.id || `p${idx}`)}
+              className={`flex-shrink-0 min-w-[180px] p-4 rounded-2xl transition-all duration-300 text-left border-2 ${
+                activeId === (p.id || `p${idx}`) 
+                  ? 'border-primary bg-primary/10 scale-[1.02]' 
+                  : 'border-white/5 bg-slate-900/40 hover:border-white/10'
               }`}
             >
-              <div className="flex justify-between items-center mb-4">
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
-                  propuestaActiva?.id === p.id ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
-                }`}>OPCIÓN {idx + 1}</span>
-                <span className="text-sm font-black text-indigo-400">{(p.score || 0).toFixed(1)}%</span>
+              <div className="flex justify-between items-center mb-3">
+                <span className={`text-[8px] font-bold px-2 py-0.5 rounded ${
+                  activeId === (p.id || `p${idx}`) ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
+                }`}>OPC {idx + 1}</span>
+                <span className="text-xs font-black text-indigo-400">{(p.score || 0).toFixed(1)}%</span>
               </div>
-              <h4 className={`text-sm font-bold mb-1 truncate ${propuestaActiva?.id === p.id ? 'text-white' : 'text-slate-400'}`}>{p.name || 'Opción SAP'}</h4>
-              <p className="text-[10px] text-slate-500 italic truncate">{(p.items?.length || 0)} Materias</p>
+              <h4 className="text-xs font-bold text-white mb-1 truncate">{p.name || 'Opción'}</h4>
+              <p className="text-[10px] text-slate-500 italic">{(p.items?.length || 0)} Materias</p>
             </button>
           ))}
         </div>
