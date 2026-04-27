@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { confirmSwapMatch } from '../../services/api';
+import { confirmSwapMatch, rejectSwap } from '../../services/api';
 import FormalizationCertificate from '../swaps/FormalizationCertificate';
 
 interface SwapMatch {
@@ -35,7 +35,7 @@ const SwapMarket: React.FC = () => {
       subjectReceive: 'Sistemas Distribuidos',
       timeGive: 'Mar 10:00 - 12:00',
       timeReceive: 'Jue 14:00 - 16:00',
-      status: 'PENDIENTE',
+      status: 'APROBADO',
       timestamp: 'Hace 12m',
       classroomGive: 'Aula 402',
       classroomReceive: 'Laboratorio L1'
@@ -67,7 +67,19 @@ const SwapMarket: React.FC = () => {
     return () => clearInterval(interval);
   }, [matches]);
 
-  const handleConfirm = async () => {
+  const handleReject = async () => {
+    if (!selectedMatch) return;
+    setIsProcessing(true);
+    try {
+      await rejectSwap(selectedMatch.id);
+      setMatches(prev => prev.filter(m => m.id !== selectedMatch.id));
+      setSelectedMatch(null);
+    } catch (error) {
+      console.error('Error al rechazar:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
     if (!selectedMatch) return;
     setIsProcessing(true);
     try {
@@ -280,7 +292,11 @@ const SwapMarket: React.FC = () => {
                   </div>
                 )}
 
-                <button className="px-8 py-4 border border-error/30 text-error hover:bg-error/10 font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
+                <button 
+                  onClick={handleReject}
+                  disabled={isProcessing}
+                  className="px-8 py-4 border border-error/30 text-error hover:bg-error/10 font-bold rounded-xl flex items-center justify-center gap-2 transition-all"
+                >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                   Rechazar
                 </button>

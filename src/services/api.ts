@@ -49,9 +49,18 @@ export const formalizeSwap = async (matchId: string) => {
   });
   
   if (!response.ok) throw new Error('Fallo en el registro oficial');
-  
-  // El backend devuelve el Hash de Transacción y el Sello Digital
   return await response.json(); 
+};
+
+// US-10: Rechazo de Intercambio
+export const rejectSwap = async (matchId: string) => {
+  const response = await fetch(`http://localhost:3000/api/swaps/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ matchId })
+  });
+  if (!response.ok) throw new Error('Error al rechazar el intercambio');
+  return await response.json();
 };
 
 export default api;
