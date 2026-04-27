@@ -20,12 +20,13 @@ interface Proposal {
   id: string;
   name: string;
   score: number;
-  scoreBreakdown?: string; // Nuevo: El insight de la IA
+  scoreBreakdown?: string;
   items: SubjectItem[];
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión con AI Insights)
+ * US-05: Arquitecto de Horarios (Versión Blindada v3)
+ * Blindaje total contra datos indefinidos y fallos de renderizado.
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,11 +52,13 @@ const ScheduleManager: React.FC = () => {
       'from-violet-500/20 to-violet-600/10 border-violet-500/40 text-violet-400',
     ];
     let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const sName = name || 'Materia';
+    for (let i = 0; i < sName.length; i++) hash = sName.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
   };
 
   const normalize = (text: string) => {
+    if (!text) return "";
     return text.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
@@ -65,7 +68,7 @@ const ScheduleManager: React.FC = () => {
       const data = await generateScheduleProposals('santiago-123');
       if (data && Array.isArray(data.proposals)) {
         setProposals(data.proposals);
-        setPropuestaActiva(data.proposals[0]);
+        if (data.proposals.length > 0) setPropuestaActiva(data.proposals[0]);
       }
     } catch (error) {
       console.error('Error en US-05:', error);
@@ -76,24 +79,30 @@ const ScheduleManager: React.FC = () => {
 
   const calculatePosition = (startTime?: string, endTime?: string) => {
     if (!startTime || !endTime || !startTime.includes(':')) return { top: '0px', height: '0px' };
-    const [startH, startM] = startTime.split(':').map(Number);
-    const [endH, endM] = endTime.split(':').map(Number);
-    const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
-    const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
-    return { top: `${top}px`, height: `${height}px` };
+    try {
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [endH, endM] = endTime.split(':').map(Number);
+      const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
+      const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
+      return { top: `${top}px`, height: `${height}px` };
+    } catch (e) {
+      return { top: '0px', height: '0px' };
+    }
   };
 
   const renderScheduleBlocks = (day: string) => {
-    if (!propuestaActiva || !propuestaActiva.items) return null;
+    if (!propuestaActiva || !Array.isArray(propuestaActiva.items)) return null;
     const targetDay = normalize(day);
 
     return propuestaActiva.items.flatMap((subject) => {
-      if (!subject.schedule) return [];
+      if (!subject.schedule || !Array.isArray(subject.schedule)) return [];
       const colorStyles = getSubjectColor(subject.name);
+      
       return subject.schedule
         .filter((s) => normalize(s.day || '') === targetDay)
         .map((s, sIdx) => {
           const pos = calculatePosition(s.startTime, s.endTime);
+          if (pos.height === '0px') return null;
           return (
             <div 
               key={`${subject.name}-${sIdx}`}
@@ -103,10 +112,10 @@ const ScheduleManager: React.FC = () => {
               style={{ top: pos.top, height: pos.height }}
             >
               <div className="overflow-hidden">
-                <h4 className="text-[10px] font-black uppercase truncate">{subject.name}</h4>
+                <h4 className="text-[10px] font-black uppercase truncate">{subject.name || 'S/N'}</h4>
                 <p className="text-[8px] opacity-70 mt-1 truncate">{subject.classroom || 'SAP SERGIO'}</p>
               </div>
-              <div className="text-[9px] font-mono font-bold opacity-80">{s.startTime}</div>
+              <div className="text-[9px] font-mono font-bold opacity-80">{s.startTime || '--:--'}</div>
             </div>
           );
         });
@@ -120,25 +129,24 @@ const ScheduleManager: React.FC = () => {
           <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
           <p className="text-on-surface-variant flex items-center gap-2">
             <span className="material-symbols-outlined text-sm text-indigo-400">auto_awesome</span>
-            Optimizador de Mallas Horarias v4.0
+            Optimizador SAP | Sergio Arboleda v4.1
           </p>
         </div>
 
-        {/* AI Insight Box */}
         {propuestaActiva && (
-          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-md animate-slide-up shadow-xl shadow-primary/5">
+          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-md animate-slide-up">
             <div className="flex items-center gap-3 mb-2">
               <span className="material-symbols-outlined text-primary animate-pulse">psychology</span>
               <h4 className="text-xs font-bold text-primary uppercase tracking-tighter">AI Insight Breakdown</h4>
             </div>
             <p className="text-sm text-slate-200 leading-tight italic">
-              "{propuestaActiva.scoreBreakdown || `Esta ruta optimiza tu tiempo libre en un ${propuestaActiva.score.toFixed(1)}% evitando cruces detectados.`}"
+              "{propuestaActiva.scoreBreakdown || `Ruta óptima con score del ${(propuestaActiva.score || 0).toFixed(1)}%.`}"
             </p>
           </div>
         )}
       </div>
 
-      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl">
+      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl min-h-[600px]">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
             <span className="material-symbols-outlined text-5xl text-primary animate-spin">psychology</span>
@@ -186,10 +194,10 @@ const ScheduleManager: React.FC = () => {
                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
                   propuestaActiva?.id === p.id ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
                 }`}>OPCIÓN {idx + 1}</span>
-                <span className="text-sm font-black text-indigo-400">{p.score.toFixed(1)}%</span>
+                <span className="text-sm font-black text-indigo-400">{(p.score || 0).toFixed(1)}%</span>
               </div>
-              <h4 className={`text-sm font-bold mb-1 truncate ${propuestaActiva?.id === p.id ? 'text-white' : 'text-slate-400'}`}>{p.name}</h4>
-              <p className="text-[10px] text-slate-500 italic truncate">{p.items.length} Materias</p>
+              <h4 className={`text-sm font-bold mb-1 truncate ${propuestaActiva?.id === p.id ? 'text-white' : 'text-slate-400'}`}>{p.name || 'Opción SAP'}</h4>
+              <p className="text-[10px] text-slate-500 italic truncate">{(p.items?.length || 0)} Materias</p>
             </button>
           ))}
         </div>
