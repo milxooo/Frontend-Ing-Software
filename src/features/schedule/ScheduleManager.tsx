@@ -9,7 +9,7 @@ interface Schedule {
 
 interface SubjectItem {
   name: string;
-  schedule: Schedule[];
+  schedule?: Schedule[]; // Opcional para evitar crash
   isConflict: boolean;
   professor?: string;
   classroom?: string;
@@ -24,8 +24,8 @@ interface Proposal {
 }
 
 /**
- * US-05: Arquitecto de Horarios (Motor de Renderizado Profundo)
- * Procesa schedules anidados y muestra scores reales del backend.
+ * US-05: Arquitecto de Horarios (Versión Blindada)
+ * Previene pantallas negras mediante validación estricta de datos.
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -46,37 +46,50 @@ const ScheduleManager: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await generateScheduleProposals('santiago-123');
-      if (data && data.proposals) {
+      if (data && Array.isArray(data.proposals)) {
         setProposals(data.proposals);
         setSelectedProposalIdx(0);
+      } else {
+        console.warn('Estructura de propuestas inválida:', data);
       }
     } catch (error) {
-      console.error('Error en US-05:', error);
+      console.error('Error crítico en US-05:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const calculatePosition = (startTime: string, endTime: string) => {
-    const [startH, startM] = startTime.split(':').map(Number);
-    const [endH, endM] = endTime.split(':').map(Number);
+  const calculatePosition = (startTime?: string, endTime?: string) => {
+    if (!startTime || !endTime || !startTime.includes(':') || !endTime.includes(':')) {
+      return { top: '0px', height: '0px' };
+    }
     
-    const top = (startH - startHour + startM / 60) * pxPerHour;
-    const height = (endH - startH + (endM - startM) / 60) * pxPerHour;
-    
-    return { top: `${top}px`, height: `${height}px` };
+    try {
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [endH, endM] = endTime.split(':').map(Number);
+      
+      const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
+      const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
+      
+      return { top: `${top}px`, height: `${height}px` };
+    } catch (e) {
+      return { top: '0px', height: '0px' };
+    }
   };
 
-  // Función para aplanar los horarios y pintarlos en el grid
   const renderScheduleBlocks = (day: string) => {
     const activeProposal = proposals[selectedProposalIdx];
-    if (!activeProposal) return null;
+    if (!activeProposal || !activeProposal.items) return null;
 
-    return activeProposal.items.flatMap((subject) => 
-      subject.schedule
+    return activeProposal.items.flatMap((subject) => {
+      if (!subject.schedule || !Array.isArray(subject.schedule)) return [];
+      
+      return subject.schedule
         .filter((s) => s.day === day)
         .map((s, sIdx) => {
           const pos = calculatePosition(s.startTime, s.endTime);
+          if (pos.height === '0px') return null; // No pintar si no hay tiempo
+
           return (
             <div 
               key={`${subject.name}-${sIdx}`}
@@ -89,7 +102,7 @@ const ScheduleManager: React.FC = () => {
               onMouseEnter={(e) => subject.isConflict && setShowTooltip({ 
                 x: e.clientX, 
                 y: e.clientY, 
-                text: subject.conflictReason || 'Conflicto de Horario' 
+                text: subject.conflictReason || 'Conflicto Detectado' 
               })}
               onMouseLeave={() => setShowTooltip(null)}
             >
@@ -98,16 +111,16 @@ const ScheduleManager: React.FC = () => {
                   {subject.name}
                 </h4>
                 <p className="text-[9px] text-slate-500 mt-1 truncate">
-                  {subject.classroom || 'Sergio Arboleda - SAP'}
+                  {subject.classroom || 'SAP - Sergio Arboleda'}
                 </p>
               </div>
               <div className="text-[9px] text-slate-400 font-mono font-bold">
-                {s.startTime} - {s.endTime}
+                {s.startTime || '--:--'}
               </div>
             </div>
           );
-        })
-    );
+        });
+    });
   };
 
   return (
@@ -115,18 +128,17 @@ const ScheduleManager: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
         <p className="text-on-surface-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm text-indigo-400">query_stats</span>
-          Motor de Optimización SAP Activo | Rango: 05:00 - 00:00
+          <span className="material-symbols-outlined text-sm text-indigo-400">shield_with_heart</span>
+          Protección de Datos Activa | SAP Optimization v2.0
         </p>
       </div>
 
-      {/* Grid del Calendario */}
-      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl">
+      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl min-h-[600px]">
         {isLoading && (
-          <div className="absolute inset-0 z-40 bg-slate-950/70 backdrop-blur-md flex items-center justify-center">
+          <div className="absolute inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <span className="material-symbols-outlined text-5xl text-primary animate-spin">psychology</span>
-              <p className="text-primary font-bold animate-pulse">Optimizando tu tiempo...</p>
+              <p className="text-primary font-bold animate-pulse">Procesando malla horaria...</p>
             </div>
           </div>
         )}
@@ -157,15 +169,12 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      {/* US-05: Selector de Propuestas (Cards Limpias sin "coso gris") */}
-      <div className="mt-12 space-y-6 relative z-10">
-        <div className="flex justify-between items-end">
-          <h3 className="text-xl font-bold text-white flex items-center gap-3">
-            <span className="material-symbols-outlined text-indigo-400">layers</span>
-            Propuestas Generadas
-          </h3>
-          <span className="text-[10px] text-slate-500 font-mono">BACKEND_SCORE_PROTOCOL_V1</span>
-        </div>
+      {/* Propuestas */}
+      <div className="mt-12 space-y-6">
+        <h3 className="text-xl font-bold text-white flex items-center gap-3">
+          <span className="material-symbols-outlined text-indigo-400">style</span>
+          Propuestas del Optimizador
+        </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {proposals.length > 0 ? (
@@ -186,22 +195,21 @@ const ScheduleManager: React.FC = () => {
                     OPCIÓN {idx + 1}
                   </span>
                   <span className="text-sm font-black text-indigo-400">
-                    {p.score ? `${p.score.toFixed(1)}%` : '0%'}
+                    {typeof p.score === 'number' ? `${p.score.toFixed(1)}%` : '0%'}
                   </span>
                 </div>
                 <h4 className={`text-sm font-bold mb-1 truncate ${selectedProposalIdx === idx ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
-                  {p.name || `Propuesta SAP-${idx + 1}`}
+                  {p.name || `Opción SAP ${idx + 1}`}
                 </h4>
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                  <span className="material-symbols-outlined text-[14px]">school</span>
-                  {p.items?.length || 0} materias registradas
+                <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                  <span className="material-symbols-outlined text-[14px]">event_note</span>
+                  {p.items?.length || 0} materias
                 </div>
               </button>
             ))
           ) : (
-            <div className="col-span-5 p-12 rounded-3xl text-center bg-slate-900/20 border-2 border-dashed border-white/5 flex flex-col items-center gap-4">
-              <span className="material-symbols-outlined text-4xl text-slate-700">query_stats</span>
-              <p className="text-slate-500 font-medium italic">Esperando órdenes del motor de IA...</p>
+            <div className="col-span-5 p-12 rounded-3xl text-center bg-slate-900/20 border-2 border-dashed border-white/5">
+              <p className="text-slate-500 font-medium italic">Presiona el botón para generar propuestas.</p>
             </div>
           )}
         </div>
@@ -218,7 +226,7 @@ const ScheduleManager: React.FC = () => {
             autorenew
           </span>
           <span className="text-lg font-bold">Optimizar Ahora</span>
-          <div className="absolute top-0 -left-full w-full h-full bg-white/10 skew-x-[-20deg] group-hover:left-[150%] transition-all duration-1000 ease-in-out"></div>
+          <div className="absolute top-0 -left-full w-full h-full bg-white/20 skew-x-[-20deg] group-hover:left-[150%] transition-all duration-1000 ease-in-out"></div>
         </button>
       </div>
 
@@ -228,7 +236,7 @@ const ScheduleManager: React.FC = () => {
           className="fixed z-[100] px-4 py-2 bg-error text-on-error rounded-xl shadow-2xl text-[10px] font-bold animate-fade-in pointer-events-none border border-white/20"
           style={{ left: showTooltip.x + 15, top: showTooltip.y + 15 }}
         >
-          ⚠️ {showTooltip.text}
+          {showTooltip.text}
         </div>
       )}
     </div>
