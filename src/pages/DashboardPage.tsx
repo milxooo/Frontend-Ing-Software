@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { syncAcademicHistory } from '../services/api';
+import ScheduleManager from '../features/schedule/ScheduleManager';
+import SwapMarket from '../features/marketplace/SwapMarket';
+import ProfileSettings from '../features/profile/ProfileSettings';
 
 /**
  * OptimaAcademia Dashboard Page
@@ -114,6 +117,15 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
             </div>
           </div>
         );
+
+      case 'marketplace':
+        return <SwapMarket />;
+
+      case 'scheduler':
+        return <ScheduleManager />;
+
+      case 'profile':
+        return <ProfileSettings />;
 
       default:
         return (
