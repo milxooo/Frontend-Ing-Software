@@ -14,6 +14,7 @@ interface SwapMatch {
   timestamp: string;
   classroomGive?: string;
   classroomReceive?: string;
+  transactionId?: string;
 }
 
 /**
@@ -96,9 +97,9 @@ const SwapMarket: React.FC = () => {
   const handleFormalizeSuccess = (txId: string) => {
     if (!selectedMatch) return;
     setMatches(prev => prev.map(m => 
-      m.id === selectedMatch.id ? { ...m, status: 'FORMALIZADO' } : m
+      m.id === selectedMatch.id ? { ...m, status: 'FORMALIZADO', transactionId: txId } : m
     ));
-    setSelectedMatch(prev => prev ? { ...prev, status: 'FORMALIZADO' } : null);
+    setSelectedMatch(prev => prev ? { ...prev, status: 'FORMALIZADO', transactionId: txId } : null);
   };
 
   return (
@@ -178,6 +179,7 @@ const SwapMarket: React.FC = () => {
                   subjectA={selectedMatch.subjectGive}
                   subjectB={selectedMatch.subjectReceive}
                   status={selectedMatch.status}
+                  transactionId={selectedMatch.transactionId}
                   onSuccess={handleFormalizeSuccess}
                 />
               ) : (

@@ -8,6 +8,7 @@ interface CertificateProps {
   subjectA: string;
   subjectB: string;
   status: string;
+  transactionId?: string;
   onSuccess?: (txId: string) => void;
 }
 
@@ -16,10 +17,10 @@ interface CertificateProps {
  * Implementado con Sello Digital, Efectos de Brillo e Integridad de Sistema.
  */
 const FormalizationCertificate: React.FC<CertificateProps> = ({ 
-  matchId, studentA, studentB, subjectA, subjectB, status, onSuccess 
+  matchId, studentA, studentB, subjectA, subjectB, status, transactionId: initialTxId, onSuccess 
 }) => {
   const [isFormalizing, setIsFormalizing] = useState(false);
-  const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(initialTxId || null);
   const [isOnline, setIsOnline] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
