@@ -20,11 +20,12 @@ interface Proposal {
   id: string;
   name: string;
   score: number;
+  scoreBreakdown?: string; // Nuevo: El insight de la IA
   items: SubjectItem[];
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión Refactorizada con Colores)
+ * US-05: Arquitecto de Horarios (Versión con AI Insights)
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +42,6 @@ const ScheduleManager: React.FC = () => {
   const pxPerHour = 80;
   const startHour = 5;
 
-  // Paleta de colores Premium
   const getSubjectColor = (name: string) => {
     const colors = [
       'from-indigo-500/20 to-indigo-600/10 border-indigo-500/40 text-indigo-400',
@@ -49,7 +49,6 @@ const ScheduleManager: React.FC = () => {
       'from-amber-500/20 to-amber-600/10 border-amber-500/40 text-amber-400',
       'from-rose-500/20 to-rose-600/10 border-rose-500/40 text-rose-400',
       'from-violet-500/20 to-violet-600/10 border-violet-500/40 text-violet-400',
-      'from-cyan-500/20 to-cyan-600/10 border-cyan-500/40 text-cyan-400',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -66,7 +65,7 @@ const ScheduleManager: React.FC = () => {
       const data = await generateScheduleProposals('santiago-123');
       if (data && Array.isArray(data.proposals)) {
         setProposals(data.proposals);
-        setPropuestaActiva(data.proposals[0]); // Seleccionamos la primera por defecto
+        setPropuestaActiva(data.proposals[0]);
       }
     } catch (error) {
       console.error('Error en US-05:', error);
@@ -91,46 +90,23 @@ const ScheduleManager: React.FC = () => {
     return propuestaActiva.items.flatMap((subject) => {
       if (!subject.schedule) return [];
       const colorStyles = getSubjectColor(subject.name);
-      
       return subject.schedule
-        .filter((s) => {
-          const sDay = normalize(s.day || '');
-          return sDay === targetDay || 
-                 (sDay === 'lu' && targetDay === 'lunes') ||
-                 (sDay === 'ma' && targetDay === 'martes') ||
-                 (sDay === 'mi' && targetDay === 'miercoles') ||
-                 (sDay === 'ju' && targetDay === 'jueves') ||
-                 (sDay === 'vi' && targetDay === 'viernes');
-        })
+        .filter((s) => normalize(s.day || '') === targetDay)
         .map((s, sIdx) => {
           const pos = calculatePosition(s.startTime, s.endTime);
           return (
             <div 
               key={`${subject.name}-${sIdx}`}
               className={`absolute left-1 right-1 rounded-xl p-3 flex flex-col justify-between transition-all duration-300 shadow-lg border-l-4 bg-gradient-to-br ${
-                subject.isConflict 
-                  ? 'bg-error/20 border-error text-error z-20' 
-                  : `${colorStyles} z-10 hover:scale-[1.02] hover:brightness-110`
+                subject.isConflict ? 'bg-error/20 border-error text-error z-20' : `${colorStyles} z-10`
               }`}
               style={{ top: pos.top, height: pos.height }}
-              onMouseEnter={(e) => subject.isConflict && setShowTooltip({ 
-                x: e.clientX, 
-                y: e.clientY, 
-                text: subject.conflictReason || 'Conflicto SAP' 
-              })}
-              onMouseLeave={() => setShowTooltip(null)}
             >
               <div className="overflow-hidden">
-                <h4 className="text-[10px] font-black leading-tight uppercase truncate">
-                  {subject.name}
-                </h4>
-                <p className="text-[8px] opacity-70 mt-1 truncate">
-                  {subject.classroom || 'SAP SERGIO'}
-                </p>
+                <h4 className="text-[10px] font-black uppercase truncate">{subject.name}</h4>
+                <p className="text-[8px] opacity-70 mt-1 truncate">{subject.classroom || 'SAP SERGIO'}</p>
               </div>
-              <div className="text-[9px] font-mono font-bold opacity-80">
-                {s.startTime} - {s.endTime}
-              </div>
+              <div className="text-[9px] font-mono font-bold opacity-80">{s.startTime}</div>
             </div>
           );
         });
@@ -138,16 +114,30 @@ const ScheduleManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in relative pb-10">
-      <div className="mb-8">
-        <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
-        <p className="text-on-surface-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm text-indigo-400">palette</span>
-          Mapeo de Colores Dinámico | Universidad Sergio Arboleda
-        </p>
+    <div className="space-y-8 animate-fade-in relative pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+          <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
+          <p className="text-on-surface-variant flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-indigo-400">auto_awesome</span>
+            Optimizador de Mallas Horarias v4.0
+          </p>
+        </div>
+
+        {/* AI Insight Box */}
+        {propuestaActiva && (
+          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-md animate-slide-up shadow-xl shadow-primary/5">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="material-symbols-outlined text-primary animate-pulse">psychology</span>
+              <h4 className="text-xs font-bold text-primary uppercase tracking-tighter">AI Insight Breakdown</h4>
+            </div>
+            <p className="text-sm text-slate-200 leading-tight italic">
+              "{propuestaActiva.scoreBreakdown || `Esta ruta optimiza tu tiempo libre en un ${propuestaActiva.score.toFixed(1)}% evitando cruces detectados.`}"
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Grid Calendario */}
       <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
@@ -175,11 +165,10 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Propuestas Clickables */}
       <div className="mt-12 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-400">auto_awesome_motion</span>
-          Selecciona una Propuesta
+          <span className="material-symbols-outlined text-indigo-400">explore</span>
+          Rutas de Optimización
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -188,7 +177,7 @@ const ScheduleManager: React.FC = () => {
               key={p.id || idx}
               onClick={() => setPropuestaActiva(p)}
               className={`p-5 rounded-2xl transition-all duration-300 text-left border-2 ${
-                propuestaActiva?.id === p.id || propuestaActiva?.name === p.name
+                propuestaActiva?.id === p.id 
                   ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/10' 
                   : 'border-white/5 bg-slate-900/40 hover:border-white/20'
               }`}
@@ -197,19 +186,15 @@ const ScheduleManager: React.FC = () => {
                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
                   propuestaActiva?.id === p.id ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
                 }`}>OPCIÓN {idx + 1}</span>
-                <span className="text-sm font-black text-indigo-400">{p.score ? `${p.score.toFixed(1)}%` : '0%'}</span>
+                <span className="text-sm font-black text-indigo-400">{p.score.toFixed(1)}%</span>
               </div>
-              <h4 className={`text-sm font-bold mb-1 truncate ${propuestaActiva?.id === p.id ? 'text-white' : 'text-slate-400'}`}>{p.name || `Ruta SAP ${idx + 1}`}</h4>
-              <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">calendar_view_week</span>
-                {p.items?.length || 0} materias
-              </div>
+              <h4 className={`text-sm font-bold mb-1 truncate ${propuestaActiva?.id === p.id ? 'text-white' : 'text-slate-400'}`}>{p.name}</h4>
+              <p className="text-[10px] text-slate-500 italic truncate">{p.items.length} Materias</p>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Botón Flotante */}
       <div className="fixed bottom-8 right-8 z-50">
         <button 
           onClick={handleGenerate}
@@ -220,15 +205,6 @@ const ScheduleManager: React.FC = () => {
           <span className="text-lg font-bold">Optimizar Ahora</span>
         </button>
       </div>
-
-      {showTooltip && (
-        <div 
-          className="fixed z-[100] px-4 py-2 bg-error text-on-error rounded-xl shadow-2xl text-[10px] font-bold border border-white/20"
-          style={{ left: showTooltip.x + 15, top: showTooltip.y + 15 }}
-        >
-          {showTooltip.text}
-        </div>
-      )}
     </div>
   );
 };
