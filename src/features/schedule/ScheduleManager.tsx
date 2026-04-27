@@ -41,7 +41,7 @@ interface Proposal {
 
 /**
  * US-05: Arquitecto de Horarios
- * Versión optimizada con cierre a las 10:00 PM.
+ * Versión con UI de Insights pulida (Fix de Overlap).
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +49,6 @@ const ScheduleManager: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-  // Rango ajustado: 05:00 a 22:00
   const hours = ['05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
   const pxPerHour = 80;
   const startHour = 5;
@@ -140,23 +139,30 @@ const ScheduleManager: React.FC = () => {
   const renderScoreBreakdown = (breakdown: any) => {
     if (!breakdown || typeof breakdown !== 'object') return "Analizando propuesta...";
     const config: any = {
-      creditScore: { label: 'Créditos', icon: 'school', color: 'text-indigo-400' },
-      gapScore: { label: 'Huecos', icon: 'space_dashboard', color: 'text-emerald-400' },
-      commuteScore: { label: 'Viaje', icon: 'commute', color: 'text-amber-400' },
-      failedCourseScore: { label: 'Riesgo', icon: 'warning', color: 'text-rose-400' },
-      zoneScore: { label: 'Zona', icon: 'map', color: 'text-cyan-400' }
+      creditScore: { label: 'Créditos', icon: 'school', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+      gapScore: { label: 'Huecos', icon: 'space_dashboard', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+      commuteScore: { label: 'Viaje', icon: 'commute', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+      failedCourseScore: { label: 'Riesgo', icon: 'warning', color: 'text-rose-400', bg: 'bg-rose-500/10' },
+      zoneScore: { label: 'Zona', icon: 'map', color: 'text-cyan-400', bg: 'bg-cyan-500/10' }
     };
 
     return (
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
+      <div className="flex flex-col gap-3 mt-4">
         {Object.entries(breakdown).map(([key, value]) => {
           const meta = config[key];
           if (!meta) return null;
           return (
-            <div key={key} className="flex items-center gap-2">
-              <span className={`material-symbols-outlined text-[14px] ${meta.color}`}>{meta.icon}</span>
-              <span className="text-slate-400 text-[9px] uppercase font-bold">{meta.label}:</span>
-              <span className="text-white font-bold text-[10px]">{(Number(value)).toFixed(0)}%</span>
+            <div key={key} className="flex items-center justify-between group transition-all">
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-xl ${meta.bg} border border-white/5 flex items-center justify-center`}>
+                  <span className={`material-symbols-outlined text-[16px] ${meta.color}`}>{meta.icon}</span>
+                </div>
+                <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest">{meta.label}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-white font-mono font-bold text-sm">{(Number(value)).toFixed(0)}</span>
+                <span className="text-[10px] text-slate-500">%</span>
+              </div>
             </div>
           );
         })}
@@ -166,34 +172,41 @@ const ScheduleManager: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in relative pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
+      {/* Header & Stats */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+        <div className="pt-2">
           <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/20 font-bold uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Motor Optimizado
             </span>
-            <span className="text-on-surface-variant text-sm">Santiago Parra • Ingeniería</span>
+            <span className="text-on-surface-variant text-sm font-medium">Santiago Parra • Ingeniería</span>
           </div>
         </div>
 
         {propuestaActiva && (
-          <div className="glass-panel p-5 rounded-2xl border-primary/30 bg-primary/5 max-w-lg animate-slide-up shadow-2xl">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-primary text-lg">psychology</span>
-              <h4 className="text-[10px] font-bold text-primary uppercase tracking-widest">AI Performance Insights</h4>
+          <div className="glass-panel p-6 rounded-[2rem] border-primary/20 bg-slate-900/40 min-w-[280px] animate-slide-up shadow-3xl">
+            <div className="flex items-center gap-3 pb-3 border-b border-white/5 mb-2">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-xl">psychology</span>
+              </div>
+              <div>
+                <h4 className="text-[11px] font-black text-white uppercase tracking-tighter">AI Performance</h4>
+                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Efficiency Insight</p>
+              </div>
             </div>
             {renderScoreBreakdown(propuestaActiva.scoreBreakdown)}
           </div>
         )}
       </div>
 
-      <div className="relative overflow-hidden bg-slate-900/40 rounded-[2rem] border border-white/10 shadow-3xl">
+      {/* Scheduler Grid */}
+      <div className="relative overflow-hidden bg-slate-900/40 rounded-[2.5rem] border border-white/10 shadow-3xl">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-xl flex flex-col items-center justify-center gap-4">
             <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            <p className="text-primary font-bold animate-pulse uppercase tracking-widest text-xs">Calculando rutas óptimas...</p>
+            <p className="text-primary font-bold animate-pulse uppercase tracking-widest text-xs">Modelando Semestre Ideal...</p>
           </div>
         )}
 
@@ -218,52 +231,54 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
+      {/* Proposals Drawer */}
       <div className="mt-8 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-400">layers</span>
-          Propuestas Generadas por la IA
+          Propuestas del Sistema
         </h3>
         
-        <div className="flex gap-5 overflow-x-auto pb-8 custom-scrollbar">
+        <div className="flex gap-6 overflow-x-auto pb-10 custom-scrollbar">
           {proposals.length > 0 ? proposals.map((p, idx) => (
             <button 
               key={p.id}
               onClick={() => setActiveId(p.id)}
-              className={`shrink-0 min-w-[240px] p-6 rounded-3xl transition-all duration-500 text-left border-2 group ${
+              className={`shrink-0 min-w-[260px] p-7 rounded-[2rem] transition-all duration-500 text-left border-2 group ${
                 activeId === p.id 
                   ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/20' 
                   : 'border-white/5 bg-slate-950/40 hover:border-white/20'
               }`}
             >
-              <div className="flex justify-between items-center mb-5">
-                <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${
+              <div className="flex justify-between items-center mb-6">
+                <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${
                   activeId === p.id ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-400'
-                }`}>Opción {idx + 1}</span>
+                }`}>Ruta {idx + 1}</span>
                 <div className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-indigo-400 text-sm">bolt</span>
-                  <span className="text-sm font-black text-white">{(p.score).toFixed(1)}%</span>
+                  <span className="text-base font-black text-white">{(p.score).toFixed(1)}%</span>
                 </div>
               </div>
-              <h4 className="text-white font-bold mb-2 group-hover:text-primary transition-colors">Horario de {p.totalCredits} Créditos</h4>
-              <div className="flex gap-3 text-[10px] text-slate-500 font-medium">
-                <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[12px]">calendar_today</span> {p.items.length} Materias</span>
-                <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[12px]">format_list_numbered</span> {p.totalGaps} Huecos</span>
+              <h4 className="text-white font-bold text-lg mb-2 group-hover:text-primary transition-colors">{p.totalCredits} Créditos Totales</h4>
+              <div className="flex gap-4 text-[11px] text-slate-500 font-medium">
+                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">calendar_today</span> {p.items.length} Materias</span>
+                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">format_list_numbered</span> {p.totalGaps} Huecos</span>
               </div>
             </button>
           )) : (
-            <div className="w-full p-12 text-center bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 text-slate-500 italic flex flex-col items-center gap-4">
-              <span className="material-symbols-outlined text-4xl opacity-20">inventory_2</span>
-              Haz click en "Optimizar Ahora" para que la IA diseñe tu semestre ideal.
+            <div className="w-full p-16 text-center bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10 text-slate-500 italic flex flex-col items-center gap-4">
+              <span className="material-symbols-outlined text-5xl opacity-20">inventory_2</span>
+              Pulsa el botón flotante para optimizar tu semestre.
             </div>
           )}
         </div>
       </div>
 
-      <div className="fixed bottom-10 right-10 z-50">
+      {/* Floating Optimization Button */}
+      <div className="fixed bottom-12 right-12 z-50">
         <button 
           onClick={handleGenerate}
           disabled={isLoading}
-          className="flex items-center gap-4 px-10 h-20 bg-primary-container text-on-primary-container rounded-full shadow-[0_20px_50px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all group overflow-hidden relative"
+          className="flex items-center gap-4 px-12 h-20 bg-primary-container text-on-primary-container rounded-full shadow-[0_25px_60px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all group overflow-hidden relative"
         >
           <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
           <span className={`material-symbols-outlined text-3xl relative z-10 ${isLoading ? 'animate-spin' : ''}`}>
