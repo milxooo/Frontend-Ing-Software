@@ -34,7 +34,7 @@ interface Proposal {
 
 /**
  * US-05: Arquitecto de Horarios
- * Versión con renderizado dinámico de materias en el grid.
+ * Versión Técnica Final optimizada para el Backend SAP.
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -66,9 +66,9 @@ const ScheduleManager: React.FC = () => {
 
   const parseTime = (timeStr: string) => {
     if (!timeStr) return null;
-    const clean = timeStr.split(':');
-    const h = parseInt(clean[0]);
-    const m = parseInt(clean[1] || '0');
+    const parts = timeStr.split(':');
+    const h = parseInt(parts[0]);
+    const m = parseInt(parts[1] || '0');
     return isNaN(h) ? null : { h, m };
   };
 
@@ -90,40 +90,46 @@ const ScheduleManager: React.FC = () => {
   const propuestaActiva = proposals.find(p => String(p.id || 'p0') === activeId) || null;
 
   /**
-   * Función solicitada para pintar materias en el calendario
+   * Renderizado optimizado según Ficha Técnica del Backend
    */
-  const renderizarMateriaEnCalendario = (day: string) => {
+  const renderizarMateriaEnCalendario = (dayName: string) => {
     if (!propuestaActiva || !propuestaActiva.items) return null;
+    
+    const targetDay = normalize(dayName);
     
     return propuestaActiva.items.flatMap((subject, sIdx) => {
       return (subject.schedule || []).map((slot, slotIdx) => {
-        // Match de día flexible (primeras 2 letras)
-        const dayMatch = normalize(slot.day).substring(0, 2) === normalize(day).substring(0, 2);
-        if (!dayMatch) return null;
+        // Match exacto/prefijo según especificación ("Lunes" === "Lunes")
+        if (normalize(slot.day) !== targetDay) return null;
 
         const start = parseTime(slot.startTime);
         const end = parseTime(slot.endTime);
         
         if (!start || !end) return null;
 
-        const top = (start.h - startHour + start.m / 60) * pxPerHour;
-        const height = ((end.h + end.m / 60) - (start.h + start.m / 60)) * pxPerHour;
+        // Cálculo de posición en pixeles
+        const topPos = (start.h - startHour + start.m / 60) * pxPerHour;
+        const durationHours = (end.h + end.m / 60) - (start.h + start.m / 60);
+        const heightPos = durationHours * pxPerHour;
 
         const colorClass = getSubjectColor(subject.name);
 
         return (
           <div 
             key={`${sIdx}-${slotIdx}`}
-            className={`absolute left-1 right-1 rounded-xl p-2 border-l-4 shadow-lg transition-all hover:scale-[1.05] z-20 bg-linear-to-br ${
+            className={`absolute left-1 right-1 rounded-xl p-3 border-l-4 shadow-2xl transition-all hover:scale-[1.03] hover:z-30 z-20 bg-linear-to-br ${
               subject.isConflict ? 'bg-error/20 border-error text-error' : colorClass
             }`}
-            style={{ top: `${top}px`, height: `${Math.max(height, 30)}px` }}
+            style={{ top: `${topPos}px`, height: `${Math.max(heightPos, 40)}px` }}
           >
             <div className="flex flex-col h-full justify-between overflow-hidden">
-              <span className="text-[10px] font-black uppercase leading-tight truncate">{subject.name}</span>
-              <div className="flex justify-between items-center opacity-70">
-                <span className="text-[8px] font-mono font-bold">{slot.startTime}</span>
-                <span className="material-symbols-outlined text-[10px]">location_on</span>
+              <div className="space-y-1">
+                <h4 className="text-[10px] font-black uppercase leading-none truncate text-white">{subject.name}</h4>
+                <p className="text-[8px] opacity-70 font-medium truncate">{subject.professor || 'Sin Profesor'}</p>
+              </div>
+              <div className="flex justify-between items-center mt-auto pt-1 border-t border-white/5">
+                <span className="text-[9px] font-mono font-bold tracking-tighter">{slot.startTime} - {slot.endTime}</span>
+                <span className="text-[8px] bg-white/10 px-1 rounded truncate">{subject.classroom || 'Aula'}</span>
               </div>
             </div>
           </div>
@@ -133,35 +139,35 @@ const ScheduleManager: React.FC = () => {
   };
 
   const renderScoreBreakdown = (breakdown: any) => {
-    if (!breakdown) return "Análisis de ruta no disponible";
+    if (!breakdown) return "Analizando propuesta...";
     if (typeof breakdown === 'object') {
       return (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
           {breakdown.creditScore !== undefined && (
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[14px] text-indigo-400">school</span>
-              <span className="text-slate-400">Créditos:</span>
+              <span className="text-slate-400 text-[10px]">Créditos:</span>
               <span className="text-white font-bold">{breakdown.creditScore}</span>
             </div>
           )}
           {breakdown.gapScore !== undefined && (
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[14px] text-emerald-400">space_dashboard</span>
-              <span className="text-slate-400">Huecos:</span>
+              <span className="text-slate-400 text-[10px]">Huecos:</span>
               <span className="text-white font-bold">{breakdown.gapScore}</span>
             </div>
           )}
           {breakdown.commuteScore !== undefined && (
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[14px] text-amber-400">commute</span>
-              <span className="text-slate-400">Viaje:</span>
+              <span className="text-slate-400 text-[10px]">Viaje:</span>
               <span className="text-white font-bold">{breakdown.commuteScore}</span>
             </div>
           )}
           {breakdown.failedCourseScore !== undefined && (
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[14px] text-rose-400">warning</span>
-              <span className="text-slate-400">Riesgo:</span>
+              <span className="text-slate-400 text-[10px]">Riesgo:</span>
               <span className="text-white font-bold">{breakdown.failedCourseScore}</span>
             </div>
           )}
@@ -173,19 +179,26 @@ const ScheduleManager: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in relative pb-20 max-w-full">
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
-          <p className="text-on-surface-variant flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-indigo-400">verified_user</span>
-            Sistema SAP Sergio Arboleda | Motor de Optimización
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-on-surface-variant flex items-center gap-2 text-sm">
+              <span className="material-symbols-outlined text-sm text-indigo-400">verified_user</span>
+              Motor SAP Sergio Arboleda
+            </p>
+            <span className="text-white/20">|</span>
+            <span className="bg-emerald-500/10 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
+              V2.5 STABLE
+            </span>
+          </div>
         </div>
 
         {propuestaActiva && (
-          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-lg animate-slide-up">
+          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-md animate-slide-up shadow-indigo-500/5">
             <h4 className="text-[10px] font-bold text-primary uppercase mb-1 flex items-center gap-2">
-              <span className="material-symbols-outlined text-xs">analytics</span>
+              <span className="material-symbols-outlined text-xs">psychology</span>
               AI Insight Breakdown
             </h4>
             <div className="text-[11px] text-slate-200">
@@ -195,25 +208,31 @@ const ScheduleManager: React.FC = () => {
         )}
       </div>
 
-      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl min-h-[500px]">
+      {/* Main Grid Section */}
+      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl min-h-[600px]">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
-            <span className="material-symbols-outlined text-5xl text-primary animate-spin">psychology</span>
+            <div className="flex flex-col items-center gap-4">
+              <span className="material-symbols-outlined text-6xl text-primary animate-spin">autorenew</span>
+              <p className="text-primary font-bold animate-pulse uppercase tracking-widest text-xs">Optimizando Mallas...</p>
+            </div>
           </div>
         )}
 
         <div className="grid grid-cols-8 h-[1520px] overflow-y-auto custom-scrollbar">
-          <div className="col-span-1 border-r border-white/5 pt-16">
+          {/* Time Sidebar */}
+          <div className="col-span-1 border-r border-white/5 pt-16 bg-slate-950/20">
             {hours.map(h => (
-              <div key={h} className="h-[80px] flex items-center justify-end pr-4 text-slate-600 font-mono text-[9px] border-b border-white/5">{h}</div>
+              <div key={h} className="h-[80px] flex items-center justify-end pr-4 text-slate-600 font-mono text-[10px] border-b border-white/5">{h}</div>
             ))}
           </div>
 
+          {/* Days Columns */}
           <div className="col-span-7 grid grid-cols-7 relative">
             {days.map((day, dayIdx) => (
-              <div key={day} className={`relative ${dayIdx < 6 ? 'border-r border-white/5' : ''}`}>
-                <div className="h-16 flex items-center justify-center border-b border-white/5 font-bold text-slate-500 uppercase tracking-widest text-[9px]">{day}</div>
-                <div className="relative h-full">
+              <div key={day} className={`relative flex flex-col ${dayIdx < 6 ? 'border-r border-white/5' : ''}`}>
+                <div className="h-16 flex items-center justify-center border-b border-white/5 font-black text-slate-400 uppercase tracking-widest text-[10px] bg-slate-950/40 sticky top-0 z-40 backdrop-blur-md">{day}</div>
+                <div className="relative grow min-h-[1520px]">
                   {renderizarMateriaEnCalendario(day)}
                 </div>
               </div>
@@ -222,10 +241,11 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-8 space-y-6">
+      {/* Proposals Selection Section */}
+      <div className="mt-12 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-400">auto_awesome_motion</span>
-          Propuestas Disponibles
+          <span className="material-symbols-outlined text-indigo-400">grid_view</span>
+          Propuestas del Optimizador
         </h3>
         
         <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar">
@@ -233,37 +253,50 @@ const ScheduleManager: React.FC = () => {
             <button 
               key={String(p.id || idx)}
               onClick={() => setActiveId(String(p.id || `p${idx}`))}
-              className={`shrink-0 min-w-[200px] p-5 rounded-2xl transition-all duration-300 text-left border-2 ${
+              className={`shrink-0 min-w-[240px] p-6 rounded-3xl transition-all duration-500 text-left border-2 group relative overflow-hidden ${
                 activeId === String(p.id || `p${idx}`) 
-                  ? 'border-primary bg-primary/10 scale-[1.02] shadow-xl' 
+                  ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/20' 
                   : 'border-white/5 bg-slate-900/40 hover:border-white/20'
               }`}
             >
-              <div className="flex justify-between items-center mb-4">
-                <span className={`text-[8px] font-bold px-2 py-0.5 rounded ${
-                  activeId === String(p.id || `p${idx}`) ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
-                }`}>OPCIÓN {idx + 1}</span>
-                <span className="text-xs font-black text-indigo-400">{(p.score || 0).toFixed(1)}%</span>
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-6">
+                  <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${
+                    activeId === String(p.id || `p${idx}`) ? 'bg-primary text-on-primary' : 'bg-white/5 text-slate-500'
+                  }`}>Opción {idx + 1}</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xl font-black text-white">{(p.score || 0).toFixed(1)}%</span>
+                    <span className="text-[8px] text-slate-500 uppercase font-bold">Score IA</span>
+                  </div>
+                </div>
+                <h4 className="text-base font-bold text-white mb-2 truncate group-hover:text-primary transition-colors">{String(p.name || 'Ruta Académica')}</h4>
+                <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                  <span className="material-symbols-outlined text-sm">menu_book</span>
+                  {(p.items?.length || 0)} Asignaturas
+                </div>
               </div>
-              <h4 className="text-sm font-bold text-white mb-1 truncate">{String(p.name || 'Ruta Académica')}</h4>
-              <p className="text-[10px] text-slate-500 italic">{(p.items?.length || 0)} Materias</p>
             </button>
           )) : (
-            <div className="w-full p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 text-slate-500 italic">
-              Haz click en "Optimizar Ahora" para generar rutas.
+            <div className="w-full p-12 text-center bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10 text-slate-500 italic">
+              <span className="material-symbols-outlined text-4xl mb-4 block">smart_toy</span>
+              Toca "Optimizar Ahora" para que la IA diseñe tus rutas.
             </div>
           )}
         </div>
       </div>
 
+      {/* Floating Action Button */}
       <div className="fixed bottom-8 right-8 z-50">
         <button 
           onClick={handleGenerate}
           disabled={isLoading}
-          className="flex items-center gap-4 px-8 h-16 bg-primary-container text-on-primary-container rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-4 px-10 h-20 bg-primary text-on-primary rounded-full shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:scale-110 active:scale-90 transition-all duration-300 group overflow-hidden"
         >
-          <span className={`material-symbols-outlined text-2xl ${isLoading ? 'animate-spin' : ''}`}>autorenew</span>
-          <span className="text-lg font-bold">Optimizar Ahora</span>
+          <div className="absolute inset-0 bg-white/10 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
+          <span className={`material-symbols-outlined text-3xl relative z-10 ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`}>
+            autorenew
+          </span>
+          <span className="text-xl font-black relative z-10 tracking-tight">Optimizar Ahora</span>
         </button>
       </div>
     </div>
