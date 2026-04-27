@@ -40,8 +40,8 @@ interface Proposal {
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión Final Corregida)
- * Ajustada al esquema Real del Backend: items[].section.schedule
+ * US-05: Arquitecto de Horarios
+ * Versión optimizada con cierre a las 10:00 PM.
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +49,8 @@ const ScheduleManager: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-  const hours = ['05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00'];
+  // Rango ajustado: 05:00 a 22:00
+  const hours = ['05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
   const pxPerHour = 80;
   const startHour = 5;
 
@@ -165,7 +166,6 @@ const ScheduleManager: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in relative pb-20">
-      {/* Header & Stats */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
@@ -189,7 +189,6 @@ const ScheduleManager: React.FC = () => {
         )}
       </div>
 
-      {/* Scheduler Grid */}
       <div className="relative overflow-hidden bg-slate-900/40 rounded-[2rem] border border-white/10 shadow-3xl">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-xl flex flex-col items-center justify-center gap-4">
@@ -198,8 +197,7 @@ const ScheduleManager: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-8 h-[1520px] overflow-y-auto custom-scrollbar relative">
-          {/* Timeline */}
+        <div className="grid grid-cols-8 h-[1440px] overflow-y-auto custom-scrollbar relative">
           <div className="col-span-1 border-r border-white/5 bg-slate-950/40 sticky left-0 z-40 backdrop-blur-md">
             <div className="h-16 border-b border-white/5"></div>
             {hours.map(h => (
@@ -207,12 +205,11 @@ const ScheduleManager: React.FC = () => {
             ))}
           </div>
 
-          {/* Days Columns */}
           <div className="col-span-7 grid grid-cols-7 h-full">
             {days.map((day, dayIdx) => (
               <div key={day} className={`relative h-full ${dayIdx < 6 ? 'border-r border-white/5' : ''}`}>
                 <div className="h-16 flex items-center justify-center border-b border-white/5 font-black text-slate-400 uppercase tracking-[0.2em] text-[10px] bg-slate-950/20 sticky top-0 z-30 backdrop-blur-md">{day}</div>
-                <div className="relative w-full h-[1440px]">
+                <div className="relative w-full h-[1360px]">
                   {renderizarMateriaEnCalendario(day)}
                 </div>
               </div>
@@ -221,7 +218,6 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Proposals Drawer */}
       <div className="mt-8 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-400">layers</span>
@@ -263,7 +259,6 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Optimization Button */}
       <div className="fixed bottom-10 right-10 z-50">
         <button 
           onClick={handleGenerate}
