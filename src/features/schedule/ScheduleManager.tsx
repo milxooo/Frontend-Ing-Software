@@ -41,7 +41,7 @@ interface Proposal {
 
 /**
  * US-05: Arquitecto de Horarios
- * Versión con UI de Insights pulida (Fix de Overlap).
+ * Versión Compacta: Elimina espacios muertos y optimiza el AI Insight Panel.
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -137,7 +137,7 @@ const ScheduleManager: React.FC = () => {
   };
 
   const renderScoreBreakdown = (breakdown: any) => {
-    if (!breakdown || typeof breakdown !== 'object') return "Analizando propuesta...";
+    if (!breakdown || typeof breakdown !== 'object') return null;
     const config: any = {
       creditScore: { label: 'Créditos', icon: 'school', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
       gapScore: { label: 'Huecos', icon: 'space_dashboard', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -147,21 +147,21 @@ const ScheduleManager: React.FC = () => {
     };
 
     return (
-      <div className="flex flex-col gap-3 mt-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
         {Object.entries(breakdown).map(([key, value]) => {
           const meta = config[key];
           if (!meta) return null;
           return (
-            <div key={key} className="flex items-center justify-between group transition-all">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-xl ${meta.bg} border border-white/5 flex items-center justify-center`}>
-                  <span className={`material-symbols-outlined text-[16px] ${meta.color}`}>{meta.icon}</span>
+            <div key={key} className="flex items-center justify-between group transition-all min-w-[140px]">
+              <div className="flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-lg ${meta.bg} border border-white/5 flex items-center justify-center shrink-0`}>
+                  <span className={`material-symbols-outlined text-[14px] ${meta.color}`}>{meta.icon}</span>
                 </div>
-                <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest">{meta.label}</span>
+                <span className="text-slate-400 text-[9px] uppercase font-black tracking-tight">{meta.label}</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-white font-mono font-bold text-sm">{(Number(value)).toFixed(0)}</span>
-                <span className="text-[10px] text-slate-500">%</span>
+                <span className="text-white font-mono font-bold text-xs">{(Number(value)).toFixed(0)}</span>
+                <span className="text-[8px] text-slate-500">%</span>
               </div>
             </div>
           );
@@ -171,10 +171,10 @@ const ScheduleManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in relative pb-20">
-      {/* Header & Stats */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
-        <div className="pt-2">
+    <div className="space-y-6 animate-fade-in relative pb-20 max-w-full">
+      {/* COMPACT HEADER SECTION */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 bg-slate-900/40 p-6 rounded-[2.5rem] border border-white/10 shadow-2xl">
+        <div className="shrink-0">
           <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/20 font-bold uppercase">
@@ -186,17 +186,20 @@ const ScheduleManager: React.FC = () => {
         </div>
 
         {propuestaActiva && (
-          <div className="glass-panel p-6 rounded-[2rem] border-primary/20 bg-slate-900/40 min-w-[280px] animate-slide-up shadow-3xl">
-            <div className="flex items-center gap-3 pb-3 border-b border-white/5 mb-2">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="flex-1 flex flex-col md:flex-row items-start md:items-center gap-6 pl-0 lg:pl-8 lg:border-l border-white/10">
+            <div className="shrink-0 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
                 <span className="material-symbols-outlined text-primary text-xl">psychology</span>
               </div>
               <div>
-                <h4 className="text-[11px] font-black text-white uppercase tracking-tighter">AI Performance</h4>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Efficiency Insight</p>
+                <h4 className="text-[11px] font-black text-white uppercase tracking-tighter">AI Efficiency</h4>
+                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Insight Real-time</p>
               </div>
             </div>
-            {renderScoreBreakdown(propuestaActiva.scoreBreakdown)}
+            
+            <div className="flex-1">
+              {renderScoreBreakdown(propuestaActiva.scoreBreakdown)}
+            </div>
           </div>
         )}
       </div>
@@ -232,18 +235,18 @@ const ScheduleManager: React.FC = () => {
       </div>
 
       {/* Proposals Drawer */}
-      <div className="mt-8 space-y-6">
+      <div className="space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-400">layers</span>
           Propuestas del Sistema
         </h3>
         
-        <div className="flex gap-6 overflow-x-auto pb-10 custom-scrollbar">
+        <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar">
           {proposals.length > 0 ? proposals.map((p, idx) => (
             <button 
               key={p.id}
               onClick={() => setActiveId(p.id)}
-              className={`shrink-0 min-w-[260px] p-7 rounded-[2rem] transition-all duration-500 text-left border-2 group ${
+              className={`shrink-0 min-w-[260px] p-6 rounded-[2rem] transition-all duration-500 text-left border-2 group ${
                 activeId === p.id 
                   ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/20' 
                   : 'border-white/5 bg-slate-950/40 hover:border-white/20'
@@ -265,7 +268,7 @@ const ScheduleManager: React.FC = () => {
               </div>
             </button>
           )) : (
-            <div className="w-full p-16 text-center bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10 text-slate-500 italic flex flex-col items-center gap-4">
+            <div className="w-full p-12 text-center bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 text-slate-500 italic flex flex-col items-center gap-4">
               <span className="material-symbols-outlined text-5xl opacity-20">inventory_2</span>
               Pulsa el botón flotante para optimizar tu semestre.
             </div>
