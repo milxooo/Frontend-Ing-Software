@@ -16,17 +16,25 @@ interface SubjectItem {
   conflictReason?: string;
 }
 
+interface ScoreBreakdown {
+  creditScore?: number;
+  gapScore?: number;
+  failedCourseScore?: number;
+  commuteScore?: number;
+  zoneScore?: number;
+}
+
 interface Proposal {
   id: string;
   name: string;
   score: number;
-  scoreBreakdown?: string;
+  scoreBreakdown?: string | ScoreBreakdown;
   items: SubjectItem[];
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión Indestructible)
- * Blindada contra NaNs, tipos incorrectos y errores de renderizado.
+ * US-05: Arquitecto de Horarios (Versión Ultra-Resiliente)
+ * Resuelve el error "Objects are not valid as a React child".
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -60,12 +68,9 @@ const ScheduleManager: React.FC = () => {
     if (!startTime || !endTime || !startTime.includes(':') || !endTime.includes(':')) return { top: '0px', height: '0px' };
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
-    
     if (isNaN(startH) || isNaN(endH)) return { top: '0px', height: '0px' };
-
     const topPos = (startH - startHour + (isNaN(startM) ? 0 : startM) / 60) * pxPerHour;
     const duration = (endH - startH + ((isNaN(endM) ? 0 : endM) - (isNaN(startM) ? 0 : startM)) / 60) * pxPerHour;
-    
     return { top: `${topPos}px`, height: `${Math.max(duration, 20)}px` };
   };
 
@@ -86,15 +91,44 @@ const ScheduleManager: React.FC = () => {
 
   const propuestaActiva = proposals.find(p => String(p.id || 'p0') === activeId) || null;
 
+  // Función para renderizar el scoreBreakdown de forma segura
+  const renderScoreBreakdown = (breakdown: any) => {
+    if (!breakdown) return "Análisis de ruta no disponible";
+    
+    // Si es un objeto (lo que causaba el crash)
+    if (typeof breakdown === 'object') {
+      return (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+          {breakdown.creditScore !== undefined && (
+            <span className="flex items-center gap-1">
+              <span className="text-indigo-400 font-bold">Créditos:</span> {breakdown.creditScore}
+            </span>
+          )}
+          {breakdown.gapScore !== undefined && (
+            <span className="flex items-center gap-1">
+              <span className="text-emerald-400 font-bold">Huecos:</span> {breakdown.gapScore}
+            </span>
+          )}
+          {breakdown.commuteScore !== undefined && (
+            <span className="flex items-center gap-1">
+              <span className="text-amber-400 font-bold">Viaje:</span> {breakdown.commuteScore}
+            </span>
+          )}
+        </div>
+      );
+    }
+    
+    // Si es un string (lo normal)
+    return String(breakdown);
+  };
+
   const renderScheduleBlocks = (day: string) => {
     try {
       if (!propuestaActiva || !Array.isArray(propuestaActiva.items)) return null;
       const targetDay = normalize(day);
-
       return propuestaActiva.items.map((subject, idx) => {
         if (!subject || !subject.schedule || !Array.isArray(subject.schedule)) return null;
         const colorStyles = getSubjectColor(subject.name);
-        
         return (
           <React.Fragment key={`${subject.name || idx}-${idx}`}>
             {subject.schedule
@@ -135,11 +169,14 @@ const ScheduleManager: React.FC = () => {
         </div>
 
         {propuestaActiva && (
-          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-md animate-slide-up">
-            <h4 className="text-[10px] font-bold text-primary uppercase mb-1">AI Insight Breakdown</h4>
-            <p className="text-xs text-slate-200 italic">
-              "{propuestaActiva.scoreBreakdown || `Ruta óptima con score del ${(propuestaActiva.score || 0).toFixed(1)}%`}"
-            </p>
+          <div className="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 max-w-lg animate-slide-up">
+            <h4 className="text-[10px] font-bold text-primary uppercase mb-1 flex items-center gap-2">
+              <span className="material-symbols-outlined text-xs">analytics</span>
+              AI Insight Breakdown
+            </h4>
+            <div className="text-[11px] text-slate-200">
+              {renderScoreBreakdown(propuestaActiva.scoreBreakdown)}
+            </div>
           </div>
         )}
       </div>
@@ -194,7 +231,7 @@ const ScheduleManager: React.FC = () => {
                 }`}>OPCIÓN {idx + 1}</span>
                 <span className="text-xs font-black text-indigo-400">{(p.score || 0).toFixed(1)}%</span>
               </div>
-              <h4 className="text-sm font-bold text-white mb-1 truncate">{p.name || 'Ruta Académica'}</h4>
+              <h4 className="text-sm font-bold text-white mb-1 truncate">{String(p.name || 'Ruta Académica')}</h4>
               <p className="text-[10px] text-slate-500 italic">{(p.items?.length || 0)} Materias</p>
             </button>
           )) : (
