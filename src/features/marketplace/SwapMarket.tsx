@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { confirmSwapMatch, formalizeSwap } from '../../services/api';
+import { confirmSwapMatch } from '../../services/api';
+import FormalizationCertificate from '../swaps/FormalizationCertificate';
 
 interface SwapMatch {
   id: string;
@@ -70,7 +71,7 @@ const SwapMarket: React.FC = () => {
     if (!selectedMatch) return;
     setIsProcessing(true);
     try {
-      // US-10: Confirmación Mutua (PATCH)
+      // US-10: Confirmación Bilateral de Swap (Confirmación Mutua)
       const result = await confirmSwapMatch(selectedMatch.id, 'santiago-123');
       
       // Actualizamos el estado local
@@ -86,22 +87,12 @@ const SwapMarket: React.FC = () => {
     }
   };
 
-  const handleFormalize = async () => {
+  const handleFormalizeSuccess = (txId: string) => {
     if (!selectedMatch) return;
-    setIsProcessing(true);
-    try {
-      // US-11: Formalización con Sello Digital
-      const result = await formalizeSwap(selectedMatch.id);
-      setMatches(prev => prev.map(m => 
-        m.id === selectedMatch.id ? { ...m, status: 'FORMALIZADO' } : m
-      ));
-      setSelectedMatch(prev => prev ? { ...prev, status: 'FORMALIZADO' } : null);
-      alert(`Intercambio Formalizado. Sello Digital: ${result.transactionId || 'TX-8822-OK'}`);
-    } catch (error) {
-      console.error('Error en formalización:', error);
-    } finally {
-      setIsProcessing(false);
-    }
+    setMatches(prev => prev.map(m => 
+      m.id === selectedMatch.id ? { ...m, status: 'FORMALIZADO' } : m
+    ));
+    setSelectedMatch(prev => prev ? { ...prev, status: 'FORMALIZADO' } : null);
   };
 
   return (
@@ -173,58 +164,72 @@ const SwapMarket: React.FC = () => {
               </div>
             </div>
 
-            {/* Exchange Grid */}
-            <div className="p-8 flex-1 flex flex-col justify-center">
-              <div className="grid grid-cols-11 items-center gap-6">
-                {/* User Course */}
-                <div className="col-span-5">
-                  <div className="mb-4">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tú entregas</span>
-                  </div>
-                  <div className="bg-slate-900/50 rounded-2xl p-6 border-l-4 border-indigo-500 group hover:bg-slate-900 transition-all">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
-                        <span className="material-symbols-outlined">security</span>
+            {/* Exchange Content (Grid or Certificate) */}
+            <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
+              {selectedMatch.status === 'APROBADO' || selectedMatch.status === 'FORMALIZADO' ? (
+                <FormalizationCertificate 
+                  matchId={selectedMatch.id}
+                  studentA="Santiago Parra" // TÚ
+                  studentB={selectedMatch.peerName}
+                  subjectA={selectedMatch.subjectGive}
+                  subjectB={selectedMatch.subjectReceive}
+                  status={selectedMatch.status}
+                  onSuccess={handleFormalizeSuccess}
+                />
+              ) : (
+                <div className="h-full flex flex-col justify-center">
+                  <div className="grid grid-cols-11 items-center gap-6">
+                    {/* User Course */}
+                    <div className="col-span-5">
+                      <div className="mb-4">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tú entregas</span>
                       </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-white">{selectedMatch.subjectGive}</h3>
-                        <p className="text-xs text-slate-400">{selectedMatch.timeGive}</p>
-                        <div className="mt-4 flex gap-2">
-                          <span className="text-[9px] bg-slate-800 text-slate-300 px-2 py-1 rounded">Aula {selectedMatch.classroomGive || 'TBA'}</span>
+                      <div className="bg-slate-900/50 rounded-2xl p-6 border-l-4 border-indigo-500 group hover:bg-slate-900 transition-all">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+                            <span className="material-symbols-outlined">security</span>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-white">{selectedMatch.subjectGive}</h3>
+                            <p className="text-xs text-slate-400">{selectedMatch.timeGive}</p>
+                            <div className="mt-4 flex gap-2">
+                              <span className="text-[9px] bg-slate-800 text-slate-300 px-2 py-1 rounded">Aula {selectedMatch.classroomGive || 'TBA'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Swap Icon */}
+                    <div className="col-span-1 flex justify-center">
+                      <div className="w-12 h-12 rounded-full bg-primary-container shadow-lg shadow-indigo-500/40 flex items-center justify-center transform hover:rotate-180 transition-transform duration-500 cursor-pointer">
+                        <span className="material-symbols-outlined text-on-primary-container font-bold">swap_horiz</span>
+                      </div>
+                    </div>
+
+                    {/* Peer Course */}
+                    <div className="col-span-5">
+                      <div className="mb-4">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tú recibes</span>
+                      </div>
+                      <div className="bg-slate-900/50 rounded-2xl p-6 border-l-4 border-cyan-500 group hover:bg-slate-900 transition-all">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400">
+                            <span className="material-symbols-outlined">dns</span>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-white">{selectedMatch.subjectReceive}</h3>
+                            <p className="text-xs text-slate-400">{selectedMatch.timeReceive}</p>
+                            <div className="mt-4 flex gap-2">
+                              <span className="text-[9px] bg-slate-800 text-slate-300 px-2 py-1 rounded">Lab {selectedMatch.classroomReceive || 'TBA'}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Swap Icon */}
-                <div className="col-span-1 flex justify-center">
-                  <div className="w-12 h-12 rounded-full bg-primary-container shadow-lg shadow-indigo-500/40 flex items-center justify-center transform hover:rotate-180 transition-transform duration-500 cursor-pointer">
-                    <span className="material-symbols-outlined text-on-primary-container font-bold">swap_horiz</span>
-                  </div>
-                </div>
-
-                {/* Peer Course */}
-                <div className="col-span-5">
-                  <div className="mb-4">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tú recibes</span>
-                  </div>
-                  <div className="bg-slate-900/50 rounded-2xl p-6 border-l-4 border-cyan-500 group hover:bg-slate-900 transition-all">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400">
-                        <span className="material-symbols-outlined">dns</span>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-white">{selectedMatch.subjectReceive}</h3>
-                        <p className="text-xs text-slate-400">{selectedMatch.timeReceive}</p>
-                        <div className="mt-4 flex gap-2">
-                          <span className="text-[9px] bg-slate-800 text-slate-300 px-2 py-1 rounded">Lab {selectedMatch.classroomReceive || 'TBA'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Footer Actions */}
