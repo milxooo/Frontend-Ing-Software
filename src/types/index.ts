@@ -1,4 +1,4 @@
-export type BlockType = 'TRABAJO' | 'BIENESTAR' | 'OTRO';
+export type BlockType = 'TRABAJO' | 'BIENESTAR' | 'OTRO' | 'CONFLICT' | 'LOGISTICS';
 
 export interface Block {
   id: string;
@@ -9,4 +9,12 @@ export interface Block {
   isRecurring: boolean;
   startDate?: string; // "YYYY-MM-DD"
   endDate?: string;   // "YYYY-MM-DD"
+}
+
+export interface LogisticsConfig {
+  mode: 'car' | 'bus' | 'walk';
+  baseTime: number;
+  bufferTime: number;
+  departureDay?: number;
+  departureTime?: string;
 }

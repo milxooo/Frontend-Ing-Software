@@ -9,6 +9,14 @@
   --tertiary: #8B5CF6; /* Purple for Universidad */
   --tertiary-hover: #7C3AED;
   
+  --logistics: #14B8A6; /* Teal for Desplazamiento */
+  --logistics-bg: #CCFBF1;
+  --logistics-border: #5EEAD4;
+  
+  --conflict: #EA580C; /* Orange for Conflicto */
+  --conflict-bg: #FFEDD5;
+  --conflict-border: #F97316;
+  
   --bg-main: #F8FAFC;
   --bg-card: #FFFFFF;
   
@@ -360,6 +368,21 @@ input:checked + .toggle-slider:before {
 
 .block-universidad {
   background-color: var(--tertiary);
+}
+
+.block-logistics {
+  background-color: var(--logistics-bg);
+  border: 1.5px solid var(--logistics-border);
+  color: var(--logistics);
+  box-shadow: none;
+}
+
+.block-conflict {
+  background-color: var(--conflict-bg);
+  border: 1.5px solid var(--conflict-border);
+  color: var(--conflict);
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2);
+  z-index: 10;
 }
 
 .calendar-header {

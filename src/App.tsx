@@ -13,14 +13,19 @@ import {
   AlertCircle,
   BookOpen,
   Edit2,
-  Trash2
+  Trash2,
+  Car,
+  Bus,
+  Footprints,
+  AlertTriangle,
+  Settings2
 } from 'lucide-react';
 import { format, startOfWeek, addWeeks, subWeeks, addDays, isSameDay, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Block } from './types';
+import type { Block, LogisticsConfig } from './types';
 import { ForbiddenZonesService } from './services/forbidden-zones.service';
 
-const hours = Array.from({ length: 11 }, (_, i) => i + 6); // 6:00 to 16:00
+const hours = Array.from({ length: 13 }, (_, i) => i + 6); // 6:00 to 18:00 (extended to 18 to fit mockup)
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar');
@@ -28,6 +33,14 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Logistics State
+  const [logisticsConfig, setLogisticsConfig] = useState<LogisticsConfig>({
+    mode: 'bus',
+    baseTime: 60,
+    bufferTime: 15
+  });
+  const [isLogisticsModalOpen, setIsLogisticsModalOpen] = useState(false);
   
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -91,6 +104,12 @@ export default function App() {
 
   const handleDeleteBlock = async (id: string) => {
     try {
+      if (id.startsWith('manual-log')) {
+        setLogisticsConfig(prev => ({ ...prev, departureDay: undefined, departureTime: undefined }));
+        setSelectedBlock(null);
+        showToast('success', 'Viaje eliminado correctamente');
+        return;
+      }
       await ForbiddenZonesService.delete(id);
       setBlocks(blocks.filter(b => b.id !== id));
       setSelectedBlock(null);
@@ -127,8 +146,7 @@ export default function App() {
           
           <div className="h-8 w-px bg-gray-200 hidden md:block"></div>
 
-          {/* View Tabs */}
-          <div className="flex bg-gray-100 p-1 rounded-lg">
+          <div className="flex bg-gray-100 p-1 rounded-lg mr-4">
             <button 
               className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition ${activeTab === 'calendar' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
               onClick={() => setActiveTab('calendar')}
@@ -144,6 +162,14 @@ export default function App() {
               Lista
             </button>
           </div>
+          
+          <button 
+            className="btn bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+            onClick={() => setIsLogisticsModalOpen(true)}
+          >
+            <Settings2 size={18} className="mr-2" />
+            Configuración Logística
+          </button>
         </div>
 
         <div className="flex items-center gap-6">
@@ -177,13 +203,25 @@ export default function App() {
             <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
           </div>
         ) : activeTab === 'calendar' ? (
-          <CalendarView blocks={blocks} weekDays={weekDays} onBlockClick={setSelectedBlock} />
+          <CalendarView blocks={blocks} weekDays={weekDays} logisticsConfig={logisticsConfig} onBlockClick={setSelectedBlock} />
         ) : (
           <ListView blocks={blocks} onBlockClick={setSelectedBlock} />
         )}
       </main>
 
       {/* Modals & Overlays */}
+      {isLogisticsModalOpen && (
+        <LogisticsModal 
+          config={logisticsConfig}
+          onClose={() => setIsLogisticsModalOpen(false)}
+          onSave={(cfg) => {
+            setLogisticsConfig(cfg);
+            setIsLogisticsModalOpen(false);
+            showToast('success', 'Perfil logístico actualizado');
+          }}
+        />
+      )}
+
       {isFormOpen && (
         <BlockForm 
           block={selectedBlock || undefined}
@@ -229,86 +267,146 @@ export default function App() {
 }
 
 // --- Component: CalendarView ---
-function CalendarView({ blocks, weekDays, onBlockClick }: { blocks: Block[], weekDays: Date[], onBlockClick: (b: Block) => void }) {
+function CalendarView({ blocks, weekDays, logisticsConfig, onBlockClick }: { blocks: Block[], weekDays: Date[], logisticsConfig: LogisticsConfig, onBlockClick: (b: Block) => void }) {
   const today = new Date();
 
+  // Pre-calculate blocks per day to easily find conflicts
+  const blocksPerDay: Record<number, any[]> = {};
+  let globalConflictMsg = '';
+
+  weekDays.forEach(day => {
+    const jsDay = day.getDay();
+    const appDayOfWeek = jsDay === 0 ? 7 : jsDay;
+    const dayDate = new Date(day);
+    dayDate.setHours(0, 0, 0, 0);
+
+    // Get fixed blocks for this specific day
+    const fixedBlocks = blocks.filter(b => {
+      if (b.dayOfWeek !== appDayOfWeek) return false;
+      if (!b.startDate) return true;
+      const start = new Date(b.startDate + 'T12:00:00');
+      start.setHours(0, 0, 0, 0);
+      if (b.isRecurring) {
+        if (!b.endDate) return dayDate >= start;
+        const end = new Date(b.endDate + 'T12:00:00');
+        end.setHours(23, 59, 59, 999);
+        return dayDate >= start && dayDate <= end;
+      } else {
+        return isSameDay(dayDate, start);
+      }
+    });
+
+    const totalTravel = logisticsConfig ? (logisticsConfig.baseTime + logisticsConfig.bufferTime) : 0;
+    const allBlocks = [...fixedBlocks];
+
+    const parseMins = (t: string) => { const [h,m] = t.split(':').map(Number); return h * 60 + m; };
+    const formatMins = (m: number) => `${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}`;
+    const isOverlap = (s1:number, e1:number, s2:number, e2:number) => Math.max(s1, s2) < Math.min(e1, e2);
+
+
+    if (logisticsConfig && logisticsConfig.departureDay === appDayOfWeek && logisticsConfig.departureTime) {
+      const sMins = parseMins(logisticsConfig.departureTime);
+      const eMins = sMins + totalTravel;
+      
+      const isConflict = fixedBlocks.some(other => isOverlap(sMins, eMins, parseMins(other.startTime), parseMins(other.endTime)));
+      
+      if (isConflict) {
+        globalConflictMsg = `Se detectó un conflicto logístico el ${format(day, 'EEEE', {locale: es})}. Tu salida hacia la universidad se solapa con tu bloque programado.`;
+      }
+      
+      allBlocks.push({ id: `manual-log-${appDayOfWeek}`, type: isConflict ? 'CONFLICT' : 'LOGISTICS', startTime: logisticsConfig.departureTime, endTime: formatMins(eMins), dayOfWeek: appDayOfWeek, isRecurring: true });
+    }
+
+    blocksPerDay[appDayOfWeek] = allBlocks;
+  });
+
   return (
-    <div className="calendar-container">
-      <div className="calendar-header">
-        <div className="bg-white"></div> {/* Empty top-left cell */}
-        {weekDays.map((day) => {
-          const isActive = isSameDay(day, today);
-          return (
-            <div key={day.toISOString()} className={`day-header ${isActive ? 'active' : ''}`}>
-              <span className="uppercase text-xs font-semibold">{format(day, 'EEE', { locale: es })}</span>
-              <span className="date">{format(day, 'd')}</span>
-            </div>
-          );
-        })}
+    <div className="calendar-container flex flex-col h-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        <div className="calendar-header">
+          <div className="bg-white"></div> {/* Empty top-left cell */}
+          {weekDays.map((day) => {
+            const isActive = isSameDay(day, today);
+            return (
+              <div key={day.toISOString()} className={`day-header ${isActive ? 'active' : ''}`}>
+                <span className="uppercase text-xs font-semibold">{format(day, 'EEE', { locale: es })}</span>
+                <span className="date">{format(day, 'd')}</span>
+              </div>
+            );
+          })}
+        </div>
+        
+        <div className="calendar-grid">
+          {hours.map(hour => (
+            <React.Fragment key={hour}>
+              <div className="time-label">{hour}:00</div>
+              {weekDays.map((day, dayIndex) => {
+                const jsDay = day.getDay();
+                const appDayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+                // Find blocks that start in this hour cell on this day
+                const cellBlocks = blocksPerDay[appDayOfWeek].filter(b => parseInt(b.startTime.split(':')[0]) === hour);
+                
+                return (
+                  <div key={`${dayIndex}-${hour}`} className="calendar-cell relative">
+                    {cellBlocks.map(block => {
+                      const [sH, sM] = block.startTime.split(':').map(Number);
+                      const [eH, eM] = block.endTime.split(':').map(Number);
+                      const durationMins = (eH * 60 + eM) - (sH * 60 + sM);
+                      
+                      const topOffset = (sM / 60) * 100;
+                      const heightPct = (durationMins / 60) * 100;
+                      
+                      const cssClass = block.type === 'TRABAJO' ? 'block-trabajo' : 
+                                       block.type === 'BIENESTAR' ? 'block-bienestar' : 
+                                       block.type === 'OTRO' ? 'block-universidad' : 
+                                       block.type === 'CONFLICT' ? 'block-conflict' : 'block-logistics';
+                      
+                      const isFixed = ['TRABAJO', 'BIENESTAR', 'OTRO'].includes(block.type);
+                      
+                      return (
+                        <div 
+                          key={block.id}
+                          className={`calendar-block absolute w-[calc(100%-8px)] left-[4px] ${cssClass}`}
+                          style={{ 
+                            top: `${topOffset}%`,
+                            height: `calc(${heightPct}% + ${(Math.floor(durationMins/60) - 1) * 1}px)`,
+                            zIndex: block.type === 'CONFLICT' ? 20 : isFixed ? 10 : 5
+                          }}
+                          onClick={() => onBlockClick(block)}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {block.type === 'TRABAJO' ? <Briefcase size={12} /> : 
+                             block.type === 'BIENESTAR' ? <Heart size={12} /> : 
+                             block.type === 'OTRO' ? <BookOpen size={12} /> :
+                             block.type === 'CONFLICT' ? <AlertTriangle size={12} className="animate-pulse" /> :
+                             <Car size={12} />
+                            }
+                            <span className="font-semibold truncate">
+                              {block.type === 'TRABAJO' ? 'Trabajo' : 
+                               block.type === 'BIENESTAR' ? 'Bienestar' : 
+                               block.type === 'OTRO' ? 'Universidad' : 
+                               block.type === 'CONFLICT' ? 'Conflicto' : ''}
+                            </span>
+                          </div>
+                          {isFixed && <span className="text-[11px] opacity-90">{block.startTime} - {block.endTime}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
       
-      <div className="calendar-grid">
-        {hours.map(hour => (
-          <React.Fragment key={hour}>
-            <div className="time-label">{hour}:00</div>
-            {weekDays.map((day, dayIndex) => {
-              // Convert JS day of week (0=Sun, 1=Mon) to app format (1=Mon, 7=Sun)
-              const jsDay = day.getDay();
-              const appDayOfWeek = jsDay === 0 ? 7 : jsDay;
-
-              // Find blocks that start in this hour cell on this day
-              const cellBlocks = blocks.filter(b => {
-                if (b.dayOfWeek !== appDayOfWeek || parseInt(b.startTime.split(':')[0]) !== hour) return false;
-
-                // Calendar cell date
-                const cellDate = new Date(day);
-                cellDate.setHours(0, 0, 0, 0);
-
-                if (!b.startDate) return true; // Falback if no date
-
-                const start = new Date(b.startDate + 'T12:00:00');
-                start.setHours(0, 0, 0, 0);
-
-                if (b.isRecurring) {
-                  if (!b.endDate) return cellDate >= start;
-                  const end = new Date(b.endDate + 'T12:00:00');
-                  end.setHours(23, 59, 59, 999);
-                  return cellDate >= start && cellDate <= end;
-                } else {
-                  return isSameDay(cellDate, start);
-                }
-              });
-              
-              return (
-                <div key={`${dayIndex}-${hour}`} className="calendar-cell">
-                  {cellBlocks.map(block => {
-                    const startH = parseInt(block.startTime.split(':')[0]);
-                    const endH = parseInt(block.endTime.split(':')[0]);
-                    const duration = endH - startH;
-                    
-                    return (
-                      <div 
-                        key={block.id}
-                        className={`calendar-block ${block.type === 'TRABAJO' ? 'block-trabajo' : block.type === 'BIENESTAR' ? 'block-bienestar' : 'block-universidad'}`}
-                        style={{ height: `calc(${duration * 100}% + ${(duration - 1) * 1}px)` }}
-                        onClick={() => onBlockClick(block)}
-                      >
-                        <div className="flex items-center gap-1.5 mb-1">
-                          {block.type === 'TRABAJO' ? <Briefcase size={12} /> : block.type === 'BIENESTAR' ? <Heart size={12} /> : <BookOpen size={12} />}
-                          <span className="font-semibold truncate">
-                            {block.type === 'TRABAJO' ? 'Trabajo' : block.type === 'BIENESTAR' ? 'Bienestar' : 'Universidad'}
-                          </span>
-                        </div>
-                        <span className="text-[11px] opacity-90">{block.startTime} - {block.endTime}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </div>
+      {globalConflictMsg && (
+        <div className="p-4 bg-orange-50 border-t border-orange-200 flex items-start gap-3 text-orange-800 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+          <AlertTriangle className="shrink-0 mt-0.5 text-orange-500" size={20} />
+          <p className="font-medium text-sm capitalize">{globalConflictMsg}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -587,13 +685,13 @@ function BlockDetail({ block, onClose, onEdit, onDelete }: { block: Block, onClo
         <div className="flex justify-between items-start mb-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-2 h-2 rounded-full ${block.type === 'TRABAJO' ? 'bg-blue-500' : block.type === 'BIENESTAR' ? 'bg-emerald-500' : 'bg-purple-500'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${block.type === 'TRABAJO' ? 'bg-blue-500' : block.type === 'BIENESTAR' ? 'bg-emerald-500' : block.type === 'OTRO' ? 'bg-purple-500' : block.type === 'CONFLICT' ? 'bg-orange-500' : 'bg-teal-500'}`}></div>
               <span className="text-xs font-bold text-gray-500 tracking-wider">
-                {block.type === 'TRABAJO' ? 'TRABAJO' : block.type === 'BIENESTAR' ? 'BIENESTAR' : 'UNIVERSIDAD'}
+                {block.type === 'TRABAJO' ? 'TRABAJO' : block.type === 'BIENESTAR' ? 'BIENESTAR' : block.type === 'OTRO' ? 'UNIVERSIDAD' : block.type === 'CONFLICT' ? 'CONFLICTO LOGÍSTICO' : 'DESPLAZAMIENTO'}
               </span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Bloque de {block.type === 'TRABAJO' ? 'Trabajo' : block.type === 'BIENESTAR' ? 'Bienestar' : 'Universidad'}
+              {['LOGISTICS', 'CONFLICT'].includes(block.type) ? 'Viaje a la Universidad' : `Bloque de ${block.type === 'TRABAJO' ? 'Trabajo' : block.type === 'BIENESTAR' ? 'Bienestar' : 'Universidad'}`}
             </h2>
           </div>
           <button className="bg-gray-100 p-2 rounded-full text-gray-500 hover:bg-gray-200 transition" onClick={onClose}>
@@ -655,13 +753,141 @@ function BlockDetail({ block, onClose, onEdit, onDelete }: { block: Block, onClo
         </div>
 
         <div className="flex gap-4">
-          <button className="btn btn-secondary flex-1 border border-gray-200" onClick={onEdit}>
-            <Edit2 size={18} className="mr-2" />
-            Editar
-          </button>
+          {!['LOGISTICS', 'CONFLICT'].includes(block.type) && (
+            <button className="btn btn-secondary flex-1 border border-gray-200" onClick={onEdit}>
+              <Edit2 size={18} className="mr-2" />
+              Editar
+            </button>
+          )}
           <button className="btn bg-red-50 text-red-600 hover:bg-red-100 flex-1 border border-red-100" onClick={onDelete}>
             <Trash2 size={18} className="mr-2" />
             Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Component: LogisticsModal ---
+function LogisticsModal({ config, onClose, onSave }: { config: LogisticsConfig, onClose: () => void, onSave: (c: LogisticsConfig) => void }) {
+  const [formData, setFormData] = useState<LogisticsConfig>({
+    ...config,
+    departureDay: config.departureDay || 1,
+    departureTime: config.departureTime || '08:00'
+  });
+  
+  return (
+    <div className="overlay z-50">
+      <div className="modal-content max-w-md w-full bg-white shadow-2xl rounded-3xl p-8 relative">
+        <button type="button" className="absolute top-6 right-6 bg-gray-100 p-2 rounded-full text-gray-500 hover:bg-gray-200" onClick={onClose}>
+          <X size={20} />
+        </button>
+        
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Tiempos de Desplazamiento</h2>
+        <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+          Define cuánto tardas en llegar a la U. Esto asegura que el horario propuesto sea logísticamente viable y no se asigne clase en tus tiempos de viaje.
+        </p>
+        
+        {/* Modes */}
+        <div className="flex gap-4 mb-10 justify-center">
+           <button 
+             className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all w-28 relative overflow-hidden ${formData.mode === 'car' ? 'border-teal-500 text-teal-700 bg-teal-50 ring-4 ring-teal-500/20 shadow-md transform scale-105' : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'}`}
+             onClick={() => setFormData({...formData, mode: 'car'})}
+           >
+             {formData.mode === 'car' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-teal-500"></div>}
+             <Car size={32} />
+             <span className="text-sm font-bold">Coche</span>
+           </button>
+           <button 
+             className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all w-28 relative overflow-hidden ${formData.mode === 'bus' ? 'border-teal-500 text-teal-700 bg-teal-50 ring-4 ring-teal-500/20 shadow-md transform scale-105' : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'}`}
+             onClick={() => setFormData({...formData, mode: 'bus'})}
+           >
+             {formData.mode === 'bus' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-teal-500"></div>}
+             <Bus size={32} />
+             <span className="text-sm font-bold">Autobús</span>
+           </button>
+           <button 
+             className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all w-28 relative overflow-hidden ${formData.mode === 'walk' ? 'border-teal-500 text-teal-700 bg-teal-50 ring-4 ring-teal-500/20 shadow-md transform scale-105' : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'}`}
+             onClick={() => setFormData({...formData, mode: 'walk'})}
+           >
+             {formData.mode === 'walk' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-teal-500"></div>}
+             <Footprints size={32} />
+             <span className="text-sm font-bold">Caminando</span>
+           </button>
+        </div>
+        
+        {/* Base Time Slider */}
+        <div className="mb-10">
+          <p className="font-semibold text-gray-700 text-sm mb-4">Tiempo de Traslado Base</p>
+          <div className="text-center mb-6">
+            <span className="text-gray-500 font-medium">Tardas</span>
+            <span className="text-5xl font-bold text-teal-600 mx-3">{formData.baseTime}</span>
+            <span className="text-gray-500 font-medium">minutos</span>
+          </div>
+          <div className="px-2">
+            <input 
+              type="range" min="0" max="180" step="15" 
+              value={formData.baseTime} 
+              onChange={e => setFormData({...formData, baseTime: parseInt(e.target.value)})} 
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-teal-500" 
+            />
+            <div className="flex justify-between text-xs font-medium text-gray-400 mt-3">
+               <span>0</span><span>45</span><span>90</span><span>135</span><span>180</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Buffer */}
+        <div className="mb-10">
+          <p className="font-semibold text-gray-700 text-sm mb-3">Colchón de Seguridad Adicional</p>
+          <select 
+            className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors cursor-pointer appearance-none" 
+            value={formData.bufferTime} 
+            onChange={e => setFormData({...formData, bufferTime: parseInt(e.target.value)})}
+          >
+             <option value={0}>Sin colchón</option>
+             <option value={15}>15 minutos</option>
+             <option value={30}>30 minutos</option>
+             <option value={45}>45 minutos</option>
+          </select>
+        </div>
+        
+        {/* Departure Day/Time */}
+        <div className="mb-10 grid grid-cols-2 gap-4">
+          <div>
+            <p className="font-semibold text-gray-700 text-sm mb-3">Día de salida</p>
+            <select 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors cursor-pointer appearance-none" 
+              value={formData.departureDay || 1} 
+              onChange={e => setFormData({...formData, departureDay: parseInt(e.target.value)})}
+            >
+               <option value={1}>Lunes</option>
+               <option value={2}>Martes</option>
+               <option value={3}>Miércoles</option>
+               <option value={4}>Jueves</option>
+               <option value={5}>Viernes</option>
+               <option value={6}>Sábado</option>
+               <option value={7}>Domingo</option>
+            </select>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-700 text-sm mb-3">Hora de salida</p>
+            <input 
+              type="time" 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors cursor-pointer" 
+              value={formData.departureTime || "08:00"} 
+              onChange={e => setFormData({...formData, departureTime: e.target.value})}
+            />
+          </div>
+        </div>
+        
+        <div className="flex gap-3">
+          <button 
+            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold text-lg py-4 rounded-2xl transition-colors shadow-lg shadow-teal-500/20" 
+            onClick={() => onSave(formData)}
+          >
+            Guardar Viaje
           </button>
         </div>
       </div>
