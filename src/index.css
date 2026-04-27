@@ -2,7 +2,11 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-200 antialiased;
+    background-color: #020617;
+    color: #e4e1ed;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background-image: 
       radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
       radial-gradient(at 100% 100%, rgba(217, 119, 33, 0.05) 0px, transparent 50%);
@@ -10,7 +14,8 @@
   }
 
   h1, h2, h3, h4, .font-display {
-    @apply font-display tracking-tight;
+    font-family: 'Outfit', sans-serif !important;
+    letter-spacing: -0.04em !important;
   }
 }
 
