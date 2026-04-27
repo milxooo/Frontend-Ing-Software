@@ -1,191 +1,157 @@
 import React from 'react';
 
 /**
- * OptimaAcademia Landing Page - TS Edition
- * Migrated from HTML/Tailwind snippet to React/TypeScript.
+ * OptimaAcademia Landing Page - Soul Edition
+ * Estética: Vercel / Linear (Premium Dark Mode)
  */
 const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   return (
-    <div className="min-h-screen bg-background text-on-surface font-body-md selection:bg-primary-container/30 antialiased">
+    <div className="min-h-screen font-body antialiased selection:bg-cyan-500/30">
       {/* TopNavBar */}
-      <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-2xl shadow-indigo-500/5 font-manrope tracking-tight">
+      <nav className="fixed top-0 w-full z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/5 font-manrope">
         <div className="flex items-center justify-between h-16 px-6 max-w-7xl mx-auto">
-          <div className="text-xl font-bold tracking-tighter text-slate-50">OptimaAcademia</div>
+          <div className="text-xl font-bold tracking-tighter text-white flex items-center gap-2">
+            <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-cyan-400 rounded-md shadow-lg shadow-indigo-500/20"></div>
+            OptimaAcademia
+          </div>
           <div className="hidden md:flex items-center gap-x-8">
-            <a className="text-indigo-400 font-semibold transition-all duration-300" href="#">Platform</a>
-            <a className="text-slate-400 font-medium hover:text-indigo-400 hover:bg-white/5 px-3 py-1 rounded transition-all duration-300" href="#">Features</a>
-            <a className="text-slate-400 font-medium hover:text-indigo-400 hover:bg-white/5 px-3 py-1 rounded transition-all duration-300" href="#">Solutions</a>
-            <a className="text-slate-400 font-medium hover:text-indigo-400 hover:bg-white/5 px-3 py-1 rounded transition-all duration-300" href="#">Pricing</a>
+            <a className="text-slate-400 text-sm font-medium hover:text-white transition-colors" href="#features">Funciones</a>
+            <a className="text-slate-400 text-sm font-medium hover:text-white transition-colors" href="#tech">Tecnología</a>
+            <a className="text-slate-400 text-sm font-medium hover:text-white transition-colors" href="#university">UNAL</a>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="text-slate-400 font-medium px-4 py-2 hover:text-indigo-300 transition-colors">Log In</button>
-            <button 
-              onClick={onStart}
-              className="bg-primary-container text-on-primary-container px-6 py-2.5 rounded-full font-semibold scale-95 active:scale-90 transition-transform shadow-lg shadow-indigo-500/20"
-            >
-              Empezar a Optimizar
-            </button>
-          </div>
+          <button 
+            onClick={onStart}
+            className="bg-white text-black px-5 py-2 rounded-full text-sm font-semibold hover:bg-slate-200 transition-all active:scale-95"
+          >
+            Empezar ahora
+          </button>
         </div>
       </nav>
 
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="relative min-h-[921px] flex items-center justify-center overflow-hidden px-6">
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden px-6">
+          {/* Ambient Background Lights */}
           <div className="absolute inset-0 z-0">
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px]"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-tertiary-container/10 rounded-full blur-[100px]"></div>
+            <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-indigo-500/20 rounded-full blur-[120px]"></div>
+            <div className="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[100px]"></div>
           </div>
           
-          <div className="relative z-10 max-w-5xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <span className="text-label-md font-medium text-primary uppercase tracking-wider">New: AI Engine v2.0 is live</span>
+          <div className="relative z-10 max-w-5xl mx-auto text-center animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-10 backdrop-blur-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              </span>
+              <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em]">Engineered by Software Experts</span>
             </div>
             
-            <h1 className="font-display text-[56px] md:text-[84px] leading-tight mb-8 tracking-tighter text-white">
-              Smarter Scheduling.<br/>
-              <span className="bg-gradient-to-r from-primary to-tertiary bg-clip-text text-transparent italic">Infinite Possibilities.</span>
+            <h1 className="font-display text-5xl md:text-8xl font-extrabold leading-[1.1] mb-8 tracking-tighter text-white">
+              Domina tu Matrícula con<br/>
+              <span className="bg-gradient-to-r from-indigo-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent italic">
+                Inteligencia Artificial
+              </span>
             </h1>
             
-            <p className="font-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12 text-lg md:text-xl">
-              Experience Precision in Pedagogy. OptimaAcademia leverages advanced neural networks to synchronize complex academic environments with zero friction.
+            <p className="text-slate-400 max-w-2xl mx-auto mb-14 text-lg md:text-xl leading-relaxed font-medium">
+              Optimiza tus horarios, evita conflictos y asegura tus cupos con OptimaAcademia. La herramienta diseñada por ingenieros para resolver el caos de la vida universitaria.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <button 
                 onClick={onStart}
-                className="glow-button bg-primary-container text-on-primary-container px-10 py-5 rounded-full font-bold text-lg scale-100 hover:scale-105 active:scale-95 transition-all"
+                className="glow-button bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-10 py-5 rounded-full font-bold text-lg scale-100 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-500/25"
               >
                 Empezar a Optimizar
               </button>
-              <button className="flex items-center gap-2 text-white font-semibold group px-8 py-5">
-                Watch the vision
-                <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">play_circle</span>
+              <button className="flex items-center gap-2 text-slate-300 font-semibold group px-8 py-5 hover:text-white transition-colors">
+                Ver Video Demo
+                <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </button>
             </div>
           </div>
-
-          {/* Floating Product Reveal */}
-          <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-full max-w-6xl aspect-video rounded-3xl overflow-hidden border border-white/10 glass-card shadow-3xl shadow-black/50">
-            <img 
-              className="w-full h-full object-cover opacity-60" 
-              alt="Abstract digital rendering" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8z3Cz8Rn7YRkHNKufTKaFnMbYTqBZoULdY0uJpvB7myo3c495Doj2VAmEp0JA4H0XZFLZsTw2YvlqCdzP7L1hDypDld4UxMn0wpDy16TfE1xTU8e9raXAvoc37GAFBuQ4mYKZ5TtYoNoSMFhGDm4Mk5EmH57UjzUSV_EQ2D51xBQT8ant5lmAkjQvsPSCzFMQmiueGkO0dfjmbHMXrsijcep-sOQ3bv7Yhayl3WovrZ6fKHDz1zueOMJLIG17aCDe-zCr9jkQRqg"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
-          </div>
         </section>
 
-        {/* Value Prop / Bento Grid Section */}
-        <section className="py-32 px-6 max-w-7xl mx-auto mt-32">
-          <div className="text-center mb-24">
-            <h2 className="font-h1 text-4xl md:text-5xl mb-6">Engineered for Excellence</h2>
-            <p className="font-body-lg text-on-surface-variant max-w-xl mx-auto">Our platform integrates the most sophisticated tools for institutional management.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px]">
-            {/* AI-Driven Scheduling */}
-            <div className="md:col-span-8 glass-card rounded-3xl p-10 flex flex-col justify-between group overflow-hidden relative">
+        {/* Features Bento Grid */}
+        <section id="features" className="py-32 px-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            {/* Card 1: Sincronización */}
+            <div className="md:col-span-7 glass-card p-10 flex flex-col justify-between group relative overflow-hidden">
               <div className="relative z-10">
-                <span className="material-symbols-outlined text-primary text-4xl mb-6" style={{ fontVariationSettings: "'FILL' 1" }}>neurology</span>
-                <h3 className="font-h1 text-3xl mb-4 text-white">AI-Driven Scheduling</h3>
-                <p className="text-on-surface-variant max-w-md text-lg leading-relaxed">
-                  Solve multi-dimensional constraints in seconds. Our proprietary AI considers teacher availability, room capacity, and student preferences automatically.
+                <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-8 border border-indigo-500/20 group-hover:border-indigo-400/40 transition-colors">
+                  <span className="material-symbols-outlined text-indigo-400">sync_alt</span>
+                </div>
+                <h3 className="font-display text-3xl font-bold mb-4 text-white">Tu historial, al instante.</h3>
+                <p className="text-slate-400 text-lg leading-relaxed max-w-sm">
+                  Conéctate directamente con el portal de la universidad y carga tus materias aprobadas y prerrequisitos en un solo click.
                 </p>
               </div>
-              <div className="absolute bottom-0 right-0 w-3/4 h-3/4 opacity-20 group-hover:opacity-40 transition-opacity">
-                <img 
-                  className="w-full h-full object-contain" 
-                  alt="Intricate geometric patterns" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6WVY8chaETMnI8HIQtZMELBV3ewS1fbwjLTIMyd7ETzA7uzFFeifVpRsQiUHoX-MMauVKqhEX4LDE6B1MUTx2DuMAiggvQ1uuXZEkscROEs5e51E7sMtM2iQl-1pqdNv9zStuLjQd67MNJjgwt8U5EO5DmrVe_zK4ybKSysEe05-NIcdun1PK8nxmr-AhBy2zmwFNRATjXKkRROD8Qcr_-WWTkf98lBoiniL1HUdQzefvUjjb9FPYLZ1Qe421kaFhYCIjdkuGSmA"
-                />
+              <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl"></div>
+            </div>
+
+            {/* Card 2: Arquitecto de Horarios */}
+            <div className="md:col-span-5 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-3xl p-10 flex flex-col justify-between shadow-2xl shadow-indigo-500/10 group">
+              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-8 border border-white/10">
+                <span className="material-symbols-outlined text-white">neurology</span>
+              </div>
+              <div>
+                <h3 className="font-display text-3xl font-bold mb-4 text-white">Tu horario, tus reglas.</h3>
+                <p className="text-indigo-100/80 text-lg leading-relaxed">
+                  Define tus Zonas Prohibidas y deja que nuestra IA genere la combinación perfecta sin cruces de horario.
+                </p>
               </div>
             </div>
 
-            {/* Precision in Pedagogy */}
-            <div className="md:col-span-4 bg-primary text-on-primary rounded-3xl p-10 flex flex-col justify-end group">
-              <div className="mb-12">
-                <span className="material-symbols-outlined text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>biotech</span>
+            {/* Card 3: Swap Seguro */}
+            <div className="md:col-span-12 glass-card p-10 flex flex-col md:flex-row items-center gap-12 group">
+              <div className="flex-1">
+                <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-8 border border-cyan-500/20 group-hover:border-cyan-400/40 transition-colors">
+                  <span className="material-symbols-outlined text-cyan-400">verified_user</span>
+                </div>
+                <h3 className="font-display text-4xl font-bold mb-4 text-white">Intercambios con validez legal.</h3>
+                <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
+                  Encuentra el match perfecto para intercambiar cupos y formaliza el swap con firmas digitales y registro oficial en el sistema.
+                </p>
               </div>
-              <h3 className="font-h1 text-2xl mb-4">Precision in Pedagogy</h3>
-              <p className="text-on-primary/80 leading-relaxed">
-                Data insights that empower educators to focus on what matters: the students.
-              </p>
+              <div className="w-full md:w-1/3 aspect-square rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center relative overflow-hidden">
+                <span className="material-symbols-outlined text-slate-700 text-9xl absolute -bottom-10 -right-10 rotate-12">handshake</span>
+                <div className="relative z-10 text-center p-6">
+                  <div className="text-cyan-400 font-mono text-xs mb-2">CRYPTO_SIGNATURE_VERIFIED</div>
+                  <div className="h-1 w-32 bg-cyan-400/20 mx-auto rounded-full overflow-hidden">
+                    <div className="h-full w-2/3 bg-cyan-400 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Institutional Logic */}
-            <div className="md:col-span-4 glass-card rounded-3xl p-8 flex flex-col items-start hover:border-primary/50 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-primary">analytics</span>
-              </div>
-              <h3 className="font-h2 text-xl mb-2 text-white">Institutional Logic</h3>
-              <p className="text-on-surface-variant text-body-md">Seamlessly map complex organizational hierarchies with absolute clarity.</p>
-            </div>
-
-            {/* Instant Deployment */}
-            <div className="md:col-span-4 glass-card rounded-3xl p-8 flex flex-col items-start hover:border-primary/50 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-primary">sync_alt</span>
-              </div>
-              <h3 className="font-h2 text-xl mb-2 text-white">Instant Deployment</h3>
-              <p className="text-on-surface-variant text-body-md">One-click synchronization across all campus devices and mobile applications.</p>
-            </div>
-
-            {/* Elite Support */}
-            <div className="md:col-span-4 glass-card rounded-3xl p-8 flex flex-col items-start hover:border-primary/50 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-primary">support_agent</span>
-              </div>
-              <h3 className="font-h2 text-xl mb-2 text-white">Elite Support</h3>
-              <p className="text-on-surface-variant text-body-md">24/7 dedicated assistance for mission-critical academic operations.</p>
-            </div>
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Final CTA */}
         <section className="py-32 px-6">
-          <div className="max-w-7xl mx-auto rounded-[3rem] bg-gradient-to-br from-primary-container to-indigo-900 p-12 md:p-24 text-center relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-            <div className="relative z-10">
-              <h2 className="font-display text-4xl md:text-6xl text-white mb-8 tracking-tighter">Ready to redefine your institution?</h2>
-              <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto mb-12">
-                Join the leading academies worldwide using OptimaAcademia to streamline their entire educational ecosystem.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <button 
-                  onClick={onStart}
-                  className="bg-white text-slate-950 px-10 py-5 rounded-full font-bold text-lg hover:bg-slate-100 transition-colors shadow-xl"
-                >
-                  Empezar a Optimizar
-                </button>
-                <button className="border border-white/20 text-white bg-white/10 backdrop-blur-md px-10 py-5 rounded-full font-bold text-lg hover:bg-white/20 transition-colors">
-                  Talk to Sales
-                </button>
-              </div>
-            </div>
+          <div className="max-w-4xl mx-auto text-center space-y-10">
+            <h2 className="font-display text-4xl md:text-6xl font-bold text-white tracking-tighter">¿Listo para dejar el caos atrás?</h2>
+            <button 
+              onClick={onStart}
+              className="bg-white text-black px-12 py-5 rounded-full font-bold text-xl hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95 shadow-2xl"
+            >
+              Empezar a Optimizar
+            </button>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full py-12 mt-auto bg-slate-950 border-t border-white/5 font-manrope text-sm">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6 px-6 max-w-7xl mx-auto">
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <div className="text-lg font-bold text-slate-200">OptimaAcademia</div>
-            <div className="text-slate-500">© 2024 OptimaAcademia. All rights reserved. Precision in Pedagogy.</div>
+      <footer className="py-20 border-t border-white/5 bg-[#020617]">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="text-slate-500 text-sm font-medium text-center md:text-left">
+            © 2024 OptimaAcademia. Proyecto de Ingeniería de Software.<br/>
+            Universidad Nacional de Colombia.
           </div>
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-            <a className="text-slate-500 hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
-            <a className="text-slate-500 hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Terms of Service</a>
-            <a className="text-slate-500 hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Contact</a>
-            <a className="text-slate-500 hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">API Documentation</a>
-            <a className="text-slate-500 hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Status</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-slate-500 px-3 py-1 rounded-full border border-white/10">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              Systems Operational
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 text-emerald-500/80 text-xs font-bold uppercase tracking-widest bg-emerald-500/5 px-4 py-2 rounded-full border border-emerald-500/10">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              All Systems Operational
             </div>
           </div>
         </div>
