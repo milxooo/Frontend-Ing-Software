@@ -10,10 +10,10 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSection, onNavigate, onLogout }) => {
   const menuItems = [
     { id: 'overview', label: 'Resumen', icon: 'dashboard' },
-    { id: 'academic', label: 'Carga Académica', icon: 'account_balance' },
-    { id: 'scheduler', label: 'Arquitecto IA', icon: 'neurology' },
-    { id: 'marketplace', label: 'Mercado Swaps', icon: 'swap_horiz' },
-    { id: 'profile', label: 'Mi Perfil', icon: 'person' },
+    { id: 'academic', label: 'Carga Académica [US-02]', icon: 'account_balance' },
+    { id: 'scheduler', label: 'Arquitecto IA [US-05]', icon: 'psychology' },
+    { id: 'marketplace', label: 'Mercado Swaps [US-10/11]', icon: 'swap_horiz' },
+    { id: 'profile', label: 'Mi Perfil [US-01/03]', icon: 'person' },
   ];
 
   return (
