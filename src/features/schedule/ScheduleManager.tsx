@@ -29,10 +29,14 @@ const ScheduleManager: React.FC = () => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [showTooltip, setShowTooltip] = useState<{ x: number, y: number, text: string } | null>(null);
 
-  const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-  const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+  const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  const hours = [
+    '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', 
+    '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', 
+    '21:00', '22:00', '23:00', '00:00'
+  ];
   const pxPerHour = 80;
-  const startHour = 8;
+  const startHour = 5;
 
   const handleGenerate = async () => {
     setIsLoading(true);
@@ -130,7 +134,7 @@ const ScheduleManager: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-6 h-[880px]">
+        <div className="grid grid-cols-8 h-[1600px]">
           {/* Time Column */}
           <div className="col-span-1 border-r border-white/5 pt-16">
             {hours.map(h => (
@@ -141,9 +145,9 @@ const ScheduleManager: React.FC = () => {
           </div>
 
           {/* Days Grid */}
-          <div className="col-span-5 grid grid-cols-5 relative">
+          <div className="col-span-7 grid grid-cols-7 relative">
             {days.map((day, dayIdx) => (
-              <div key={day} className={`relative ${dayIdx < 4 ? 'border-r border-white/5' : ''}`}>
+              <div key={day} className={`relative ${dayIdx < 6 ? 'border-r border-white/5' : ''}`}>
                 <div className="h-16 flex items-center justify-center border-b border-white/5 font-bold text-slate-400 uppercase tracking-widest text-[10px]">
                   {day}
                 </div>

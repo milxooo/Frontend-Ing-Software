@@ -59,10 +59,11 @@ const SyncHub: React.FC = () => {
       {/* Background Ambient Glow */}
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] -z-10"></div>
       
-      <div className="space-y-2">
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tight">Sync Hub</h1>
-        <p className="text-lg text-on-surface-variant max-w-xl">
-          Sincroniza tu progreso académico con los sistemas universitarios de forma segura y automatizada.
+      <div className="mb-12">
+        <h2 className="text-6xl font-display font-black text-white mb-6 tracking-tighter">Sync Hub</h2>
+        <p className="text-xl text-on-surface-variant leading-relaxed max-w-2xl">
+          Sincroniza tu progreso académico con los sistemas universitarios de forma segura y automatizada. 
+          <span className="text-primary font-bold ml-2">US-02 Protocol Active.</span>
         </p>
       </div>
 
