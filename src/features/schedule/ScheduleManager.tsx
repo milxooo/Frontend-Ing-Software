@@ -9,7 +9,7 @@ interface Schedule {
 
 interface SubjectItem {
   name: string;
-  schedule?: Schedule[]; // Opcional para evitar crash
+  schedule?: Schedule[];
   isConflict: boolean;
   professor?: string;
   classroom?: string;
@@ -24,8 +24,7 @@ interface Proposal {
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión Blindada)
- * Previene pantallas negras mediante validación estricta de datos.
+ * US-05: Arquitecto de Horarios (Versión Final Sin Errores Visuales)
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +41,15 @@ const ScheduleManager: React.FC = () => {
   const pxPerHour = 80;
   const startHour = 5;
 
+  // Función para normalizar texto (Quita acentos, espacios y pasa a minúsculas)
+  const normalize = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // Quita acentos
+  };
+
   const handleGenerate = async () => {
     setIsLoading(true);
     try {
@@ -49,86 +57,73 @@ const ScheduleManager: React.FC = () => {
       if (data && Array.isArray(data.proposals)) {
         setProposals(data.proposals);
         setSelectedProposalIdx(0);
-      } else {
-        console.warn('Estructura de propuestas inválida:', data);
       }
     } catch (error) {
-      console.error('Error crítico en US-05:', error);
+      console.error('Error en US-05:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const calculatePosition = (startTime?: string, endTime?: string) => {
-    if (!startTime || !endTime || !startTime.includes(':') || !endTime.includes(':')) {
-      return { top: '0px', height: '0px' };
-    }
+    if (!startTime || !endTime || !startTime.includes(':')) return { top: '0px', height: '0px' };
     
-    try {
-      const [startH, startM] = startTime.split(':').map(Number);
-      const [endH, endM] = endTime.split(':').map(Number);
-      
-      const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
-      const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
-      
-      return { top: `${top}px`, height: `${height}px` };
-    } catch (e) {
-      return { top: '0px', height: '0px' };
-    }
+    const [startH, startM] = startTime.split(':').map(Number);
+    const [endH, endM] = endTime.split(':').map(Number);
+    
+    const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
+    const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
+    
+    return { top: `${top}px`, height: `${height}px` };
   };
 
   const renderScheduleBlocks = (day: string) => {
     const activeProposal = proposals[selectedProposalIdx];
     if (!activeProposal || !activeProposal.items) return null;
 
-    const normalizedTargetDay = day.trim().toLowerCase();
+    const targetDay = normalize(day);
 
     return activeProposal.items.flatMap((subject) => {
-      if (!subject.schedule || !Array.isArray(subject.schedule)) return [];
+      if (!subject.schedule) return [];
       
       return subject.schedule
         .filter((s) => {
-          const sDay = s.day?.trim().toLowerCase();
-          // Mapeo flexible para nombres de días
-          return sDay === normalizedTargetDay || 
-                 (sDay === 'lu' && normalizedTargetDay === 'lunes') ||
-                 (sDay === 'ma' && normalizedTargetDay === 'martes') ||
-                 (sDay === 'mi' && normalizedTargetDay === 'miércoles') ||
-                 (sDay === 'ju' && normalizedTargetDay === 'jueves') ||
-                 (sDay === 'vi' && normalizedTargetDay === 'viernes') ||
-                 (sDay === 'sa' && normalizedTargetDay === 'sábado') ||
-                 (sDay === 'do' && normalizedTargetDay === 'domingo');
+          const sDay = normalize(s.day || '');
+          return sDay === targetDay || 
+                 (sDay === 'lu' && targetDay === 'lunes') ||
+                 (sDay === 'ma' && targetDay === 'martes') ||
+                 (sDay === 'mi' && targetDay === 'miercoles') ||
+                 (sDay === 'ju' && targetDay === 'jueves') ||
+                 (sDay === 'vi' && targetDay === 'viernes');
         })
         .map((s, sIdx) => {
           const pos = calculatePosition(s.startTime, s.endTime);
-          if (pos.height === '0px') return null; // No pintar si no hay tiempo
-
           return (
             <div 
               key={`${subject.name}-${sIdx}`}
-              className={`absolute left-1 right-1 rounded-xl p-3 flex flex-col justify-between transition-all cursor-pointer overflow-hidden group shadow-lg ${
+              className={`absolute left-1 right-1 rounded-xl p-3 flex flex-col justify-between transition-all cursor-pointer shadow-lg border-2 ${
                 subject.isConflict 
-                  ? 'conflict-glow bg-error/20 border-error/50 z-20' 
-                  : 'bg-primary/10 border border-primary/20 hover:bg-primary/25 z-10'
+                  ? 'bg-error/20 border-error/50 z-20' 
+                  : 'bg-primary/10 border-primary/30 hover:bg-primary/20 z-10'
               }`}
               style={{ top: pos.top, height: pos.height }}
               onMouseEnter={(e) => subject.isConflict && setShowTooltip({ 
                 x: e.clientX, 
                 y: e.clientY, 
-                text: subject.conflictReason || 'Conflicto Detectado' 
+                text: subject.conflictReason || 'Conflicto SAP' 
               })}
               onMouseLeave={() => setShowTooltip(null)}
             >
-              <div>
-                <h4 className={`text-[11px] font-bold leading-tight truncate ${subject.isConflict ? 'text-error' : 'text-primary'}`}>
+              <div className="overflow-hidden">
+                <h4 className={`text-[10px] font-black leading-tight uppercase ${subject.isConflict ? 'text-error' : 'text-primary'}`}>
                   {subject.name}
                 </h4>
-                <p className="text-[9px] text-slate-500 mt-1 truncate">
-                  {subject.classroom || 'SAP - Sergio Arboleda'}
+                <p className="text-[8px] text-slate-500 mt-1 truncate">
+                  {subject.classroom || 'SAP - SERGIO'}
                 </p>
               </div>
               <div className="text-[9px] text-slate-400 font-mono font-bold">
-                {s.startTime || '--:--'}
+                {s.startTime}
               </div>
             </div>
           );
@@ -141,38 +136,29 @@ const ScheduleManager: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
         <p className="text-on-surface-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm text-indigo-400">shield_with_heart</span>
-          Protección de Datos Activa | SAP Optimization v2.0
+          <span className="material-symbols-outlined text-sm text-indigo-400">verified</span>
+          Mapeo de Horarios SAP Sergio Arboleda
         </p>
       </div>
 
-      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl min-h-[600px]">
+      <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl">
         {isLoading && (
-          <div className="absolute inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <span className="material-symbols-outlined text-5xl text-primary animate-spin">psychology</span>
-              <p className="text-primary font-bold animate-pulse">Procesando malla horaria...</p>
-            </div>
+          <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
+            <span className="material-symbols-outlined text-5xl text-primary animate-spin">psychology</span>
           </div>
         )}
 
         <div className="grid grid-cols-8 h-[1520px]">
-          {/* Time Column */}
           <div className="col-span-1 border-r border-white/5 pt-16">
             {hours.map(h => (
-              <div key={h} className="h-[80px] flex items-center justify-end pr-4 text-slate-600 font-mono text-[10px] border-b border-white/5">
-                {h}
-              </div>
+              <div key={h} className="h-[80px] flex items-center justify-end pr-4 text-slate-600 font-mono text-[10px] border-b border-white/5">{h}</div>
             ))}
           </div>
 
-          {/* Days Grid */}
           <div className="col-span-7 grid grid-cols-7 relative">
             {days.map((day, dayIdx) => (
               <div key={day} className={`relative ${dayIdx < 6 ? 'border-r border-white/5' : ''}`}>
-                <div className="h-16 flex items-center justify-center border-b border-white/5 font-bold text-slate-500 uppercase tracking-widest text-[9px]">
-                  {day}
-                </div>
+                <div className="h-16 flex items-center justify-center border-b border-white/5 font-bold text-slate-500 uppercase tracking-widest text-[9px]">{day}</div>
                 <div className="relative h-full">
                   {renderScheduleBlocks(day)}
                 </div>
@@ -182,10 +168,10 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Propuestas */}
+      {/* Propuestas Sin "Coso Gris" */}
       <div className="mt-12 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-400">style</span>
+          <span className="material-symbols-outlined text-indigo-400">dashboard_customize</span>
           Propuestas del Optimizador
         </h3>
         
@@ -195,7 +181,7 @@ const ScheduleManager: React.FC = () => {
               <button 
                 key={p.id || idx}
                 onClick={() => setSelectedProposalIdx(idx)}
-                className={`p-5 rounded-2xl transition-all duration-300 text-left border-2 group relative overflow-hidden ${
+                className={`p-5 rounded-2xl transition-all duration-300 text-left border-2 ${
                   selectedProposalIdx === idx 
                     ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/10' 
                     : 'border-white/5 bg-slate-900/40 hover:bg-slate-900 hover:border-white/20'
@@ -204,49 +190,39 @@ const ScheduleManager: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
                     selectedProposalIdx === idx ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
-                  }`}>
-                    OPCIÓN {idx + 1}
-                  </span>
-                  <span className="text-sm font-black text-indigo-400">
-                    {typeof p.score === 'number' ? `${p.score.toFixed(1)}%` : '0%'}
-                  </span>
+                  }`}>OPCIÓN {idx + 1}</span>
+                  <span className="text-sm font-black text-indigo-400">{p.score ? `${p.score.toFixed(1)}%` : '0%'}</span>
                 </div>
-                <h4 className={`text-sm font-bold mb-1 truncate ${selectedProposalIdx === idx ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
-                  {p.name || `Opción SAP ${idx + 1}`}
-                </h4>
-                <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                  <span className="material-symbols-outlined text-[14px]">event_note</span>
+                <h4 className={`text-sm font-bold mb-1 truncate ${selectedProposalIdx === idx ? 'text-white' : 'text-slate-400'}`}>{p.name || `Ruta ${idx + 1}`}</h4>
+                <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">event</span>
                   {p.items?.length || 0} materias
                 </div>
               </button>
             ))
           ) : (
-            <div className="col-span-5 p-12 rounded-3xl text-center bg-slate-900/20 border-2 border-dashed border-white/5">
-              <p className="text-slate-500 font-medium italic">Presiona el botón para generar propuestas.</p>
+            <div className="col-span-5 p-12 rounded-3xl text-center bg-slate-900/20 border-2 border-dashed border-white/5 text-slate-500">
+              Genera propuestas para ver las opciones disponibles.
             </div>
           )}
         </div>
       </div>
 
-      {/* Floating Action Button */}
+      {/* Botón Flotante Limpio */}
       <div className="fixed bottom-8 right-8 z-50">
         <button 
           onClick={handleGenerate}
           disabled={isLoading}
-          className="flex items-center gap-4 px-8 h-16 bg-primary-container text-on-primary-container rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all group overflow-hidden"
+          className="flex items-center gap-4 px-8 h-16 bg-primary-container text-on-primary-container rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all"
         >
-          <span className={`material-symbols-outlined text-2xl ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`}>
-            autorenew
-          </span>
+          <span className={`material-symbols-outlined text-2xl ${isLoading ? 'animate-spin' : ''}`}>autorenew</span>
           <span className="text-lg font-bold">Optimizar Ahora</span>
-          <div className="absolute top-0 -left-full w-full h-full bg-white/20 skew-x-[-20deg] group-hover:left-[150%] transition-all duration-1000 ease-in-out"></div>
         </button>
       </div>
 
-      {/* Tooltip */}
       {showTooltip && (
         <div 
-          className="fixed z-[100] px-4 py-2 bg-error text-on-error rounded-xl shadow-2xl text-[10px] font-bold animate-fade-in pointer-events-none border border-white/20"
+          className="fixed z-[100] px-4 py-2 bg-error text-on-error rounded-xl shadow-2xl text-[10px] font-bold border border-white/20"
           style={{ left: showTooltip.x + 15, top: showTooltip.y + 15 }}
         >
           {showTooltip.text}
