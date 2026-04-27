@@ -12,9 +12,10 @@ const api = axios.create({
 });
 
 // US-02: Sincronización de Historia Académica
-export const syncAcademicHistory = async (studentId: string, universityToken: string) => {
-  const response = await api.post('/sync', { studentId, universityToken });
-  return response.data;
+// Implementado según el Brief Técnico (Carga Segura)
+export const syncAcademicHistory = async (studentId: string, token: string) => {
+  const response = await api.post('/sync', { studentId, universityToken: token });
+  return response.data; // Devuelve el historial y resumen
 };
 
 // US-05: Generación de Horarios (IA)

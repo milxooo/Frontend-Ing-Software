@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
-import { syncAcademicHistory } from '../services/api';
 import ScheduleManager from '../features/schedule/ScheduleManager';
 import SwapMarket from '../features/marketplace/SwapMarket';
 import ProfileSettings from '../features/profile/ProfileSettings';
+import SyncHub from '../features/sync/SyncHub';
 
 /**
  * OptimaAcademia Dashboard Page
@@ -11,21 +11,6 @@ import ProfileSettings from '../features/profile/ProfileSettings';
  */
 const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const [activeSection, setActiveSection] = useState('overview');
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      // US-02: Realizamos la llamada al servicio de sincronización
-      await syncAcademicHistory('santiago-123', 'TOKEN_UNIVERSITARIO_PRO_2026');
-      setSyncStatus('success');
-    } catch (error) {
-      setSyncStatus('error');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const renderContent = () => {
     switch (activeSection) {
@@ -71,52 +56,7 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         );
 
       case 'academic':
-        return (
-          <div className="space-y-8 animate-fade-in">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl font-display font-bold text-white mb-4">Sincronización Académica (US-02)</h2>
-              <p className="text-on-surface-variant mb-8">Conecta tu cuenta institucional para importar tu historia académica, prerrequisitos y cupos disponibles.</p>
-              
-              <div className="glass-card p-8 space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-on-surface-variant">Token Institucional (SIA/Banner)</label>
-                  <input 
-                    type="password" 
-                    defaultValue="••••••••••••••••••••"
-                    className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
-                  />
-                </div>
-                
-                <button 
-                  onClick={handleSync}
-                  disabled={isSyncing}
-                  className={`w-full py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
-                    isSyncing ? 'bg-surface-container text-on-surface-variant' : 'bg-primary text-on-primary hover:brightness-110 shadow-lg shadow-primary/20'
-                  }`}
-                >
-                  {isSyncing ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin">sync</span>
-                      Sincronizando con SIA...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined">cloud_sync</span>
-                      Iniciar Sincronización Pro
-                    </>
-                  )}
-                </button>
-
-                {syncStatus === 'success' && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 text-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined">check_circle</span>
-                    Historia académica sincronizada con éxito (US-02-OK)
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
+        return <SyncHub />;
 
       case 'marketplace':
         return <SwapMarket />;
