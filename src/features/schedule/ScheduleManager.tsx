@@ -81,11 +81,24 @@ const ScheduleManager: React.FC = () => {
     const activeProposal = proposals[selectedProposalIdx];
     if (!activeProposal || !activeProposal.items) return null;
 
+    const normalizedTargetDay = day.trim().toLowerCase();
+
     return activeProposal.items.flatMap((subject) => {
       if (!subject.schedule || !Array.isArray(subject.schedule)) return [];
       
       return subject.schedule
-        .filter((s) => s.day === day)
+        .filter((s) => {
+          const sDay = s.day?.trim().toLowerCase();
+          // Mapeo flexible para nombres de días
+          return sDay === normalizedTargetDay || 
+                 (sDay === 'lu' && normalizedTargetDay === 'lunes') ||
+                 (sDay === 'ma' && normalizedTargetDay === 'martes') ||
+                 (sDay === 'mi' && normalizedTargetDay === 'miércoles') ||
+                 (sDay === 'ju' && normalizedTargetDay === 'jueves') ||
+                 (sDay === 'vi' && normalizedTargetDay === 'viernes') ||
+                 (sDay === 'sa' && normalizedTargetDay === 'sábado') ||
+                 (sDay === 'do' && normalizedTargetDay === 'domingo');
+        })
         .map((s, sIdx) => {
           const pos = calculatePosition(s.startTime, s.endTime);
           if (pos.height === '0px') return null; // No pintar si no hay tiempo
