@@ -8,7 +8,7 @@ function App() {
   return (
     <>
       {showDashboard ? (
-        <DashboardPage onBack={() => setShowDashboard(false)} />
+        <DashboardPage onLogout={() => setShowDashboard(false)} />
       ) : (
         <LandingPage onStart={() => setShowDashboard(true)} />
       )}
