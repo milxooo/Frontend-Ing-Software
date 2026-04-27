@@ -1,115 +1,298 @@
-import React, { useState } from 'react';
-import { confirmSwap, formalizeSwap } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { confirmSwapMatch, formalizeSwap } from '../../services/api';
+
+interface SwapMatch {
+  id: string;
+  peerName: string;
+  peerMajor: string;
+  subjectGive: string;
+  subjectReceive: string;
+  timeGive: string;
+  timeReceive: string;
+  status: 'MATCH' | 'PENDIENTE' | 'APROBADO' | 'FORMALIZADO';
+  timestamp: string;
+  classroomGive?: string;
+  classroomReceive?: string;
+}
 
 /**
- * US-10/11: Mercado de Swaps & Formalización Legal
- * Gestiona el intercambio de cupos entre estudiantes.
+ * US-10/11: Centro de Confirmación de Swaps
+ * Implementado con Polling, Validación Bilateral y Sello Digital.
  */
 const SwapMarket: React.FC = () => {
+  const [selectedMatch, setSelectedMatch] = useState<SwapMatch | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [confirmedMatches, setConfirmedMatches] = useState<string[]>([]);
-  const [formalizedMatches, setFormalizedMatches] = useState<Record<string, string>>({});
+  const [showWarning, setShowWarning] = useState(false);
 
-  const matches = [
-    { id: 'match_001', studentB: 'Mateo Hidalgo', subject: 'Cálculo Diferencial', hash: '8a3f...92c1' },
-    { id: 'match_002', studentB: 'Ana García', subject: 'Física Mecánica', hash: 'b2e1...f0a4' }
-  ];
+  // Mocks iniciales basados en el HTML proporcionado
+  const [matches, setMatches] = useState<SwapMatch[]>([
+    { 
+      id: 'SW-98234-MART', 
+      peerName: 'Elena Martínez', 
+      peerMajor: 'Ingeniería Informática',
+      subjectGive: 'Criptografía I',
+      subjectReceive: 'Sistemas Distribuidos',
+      timeGive: 'Mar 10:00 - 12:00',
+      timeReceive: 'Jue 14:00 - 16:00',
+      status: 'PENDIENTE',
+      timestamp: 'Hace 12m',
+      classroomGive: 'Aula 402',
+      classroomReceive: 'Laboratorio L1'
+    },
+    { 
+      id: 'SW-98235-RUIZ', 
+      peerName: 'Carlos Ruiz', 
+      peerMajor: 'Ciencia de Datos',
+      subjectGive: 'Álgebra Lineal',
+      subjectReceive: 'Cálculo IV',
+      timeGive: 'Lun 08:00 - 10:00',
+      timeReceive: 'Mie 08:00 - 10:00',
+      status: 'MATCH',
+      timestamp: 'Hace 1h'
+    }
+  ]);
 
-  const handleConfirm = async (matchId: string) => {
+  // US-10: Polling de 10 segundos para actualizar estado bilateral
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      // Solo si hay un match pendiente de confirmación de la otra parte
+      const pendingMatch = matches.find(m => m.status === 'PENDIENTE');
+      if (pendingMatch) {
+        console.log('US-10: Polling state for match:', pendingMatch.id);
+        // Aquí llamaríamos al backend para ver si el status ya cambió a "APROBADO"
+        // Simulación: Si es Elena Martínez, después de un tiempo pasaría a APROBADO
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [matches]);
+
+  const handleConfirm = async () => {
+    if (!selectedMatch) return;
     setIsProcessing(true);
     try {
-      // US-10: Confirmación bilateral (Student A confirma)
-      await confirmSwap(matchId, 'santiago-123');
-      setConfirmedMatches(prev => [...prev, matchId]);
+      // US-10: Confirmación Mutua (PATCH)
+      const result = await confirmSwapMatch(selectedMatch.id, 'santiago-123');
+      
+      // Actualizamos el estado local
+      setMatches(prev => prev.map(m => 
+        m.id === selectedMatch.id ? { ...m, status: result.status || 'PENDIENTE' } : m
+      ));
+      setSelectedMatch(prev => prev ? { ...prev, status: result.status || 'PENDIENTE' } : null);
+      setShowWarning(false);
     } catch (error) {
-      console.error('Error confirmando swap:', error);
+      console.error('Error en confirmación:', error);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleFormalize = async (matchId: string) => {
+  const handleFormalize = async () => {
+    if (!selectedMatch) return;
     setIsProcessing(true);
     try {
-      // US-11: Formalización Legal (Genera Sello Digital)
-      const result = await formalizeSwap(matchId);
-      setFormalizedMatches(prev => ({ ...prev, [matchId]: result.transactionId || 'TX-998877-OK' }));
+      // US-11: Formalización con Sello Digital
+      const result = await formalizeSwap(selectedMatch.id);
+      setMatches(prev => prev.map(m => 
+        m.id === selectedMatch.id ? { ...m, status: 'FORMALIZADO' } : m
+      ));
+      setSelectedMatch(prev => prev ? { ...prev, status: 'FORMALIZADO' } : null);
+      alert(`Intercambio Formalizado. Sello Digital: ${result.transactionId || 'TX-8822-OK'}`);
     } catch (error) {
-      console.error('Error formalizando swap:', error);
+      console.error('Error en formalización:', error);
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h2 className="text-3xl font-display font-bold text-white mb-2">Mercado de Swaps (US-12)</h2>
-        <p className="text-on-surface-variant">Intercambia cupos de forma segura con validación bilateral y sello digital.</p>
-      </div>
+    <div className="flex gap-8 h-full animate-fade-in">
+      {/* Inbox List (Left Column) */}
+      <section className="w-1/3 flex flex-col gap-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
+            Matches Encontrados
+            <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full">US-10</span>
+          </h3>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {matches.map(match => (
-          <div key={match.id} className="glass-card p-8 border-t-4 border-primary">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <div className="text-xs text-primary font-bold uppercase tracking-widest mb-1">Match Encontrado</div>
-                <h3 className="text-2xl font-bold text-white">{match.subject}</h3>
+        <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+          {matches.map(match => (
+            <div 
+              key={match.id}
+              onClick={() => setSelectedMatch(match)}
+              className={`glass-panel p-4 rounded-xl border-l-4 transition-all duration-200 cursor-pointer group relative overflow-hidden ${
+                selectedMatch?.id === match.id ? 'border-l-primary active-ring bg-white/5' : 'border-l-transparent hover:border-l-primary/30'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary font-bold">
+                    {match.peerName.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white">{match.peerName}</h4>
+                    <p className="text-[10px] text-slate-500">{match.peerMajor} • {match.timestamp}</p>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                  match.status === 'PENDIENTE' ? 'bg-tertiary-container/20 text-tertiary animate-pulse' :
+                  match.status === 'APROBADO' ? 'bg-green-500/20 text-green-400' :
+                  match.status === 'FORMALIZADO' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-primary/10 text-primary'
+                }`}>
+                  {match.status === 'FORMALIZADO' ? '¡EXITOSO!' : match.status}
+                </span>
               </div>
-              <div className="text-right text-xs text-on-surface-variant">
-                ID: {match.id}
+              <div className="text-xs text-slate-300 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px] text-primary">sync_alt</span>
+                {match.subjectGive} <span className="text-slate-500">por</span> {match.subjectReceive}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Detail View (Right Column) */}
+      <section className="flex-1">
+        {selectedMatch ? (
+          <div className="glass-panel h-full rounded-3xl flex flex-col overflow-hidden relative border-white/10 shadow-2xl">
+            {/* Detail Header */}
+            <div className="p-8 border-b border-white/5 bg-white/[0.02]">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">Detalles del Intercambio</h2>
+                  <p className="text-xs text-on-surface-variant flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">info</span>
+                    ID de Transacción: {selectedMatch.id}
+                  </p>
+                </div>
+                {selectedMatch.status === 'PENDIENTE' && (
+                  <div className="bg-tertiary-container/10 text-tertiary text-[10px] font-bold px-4 py-1.5 rounded-full border border-tertiary/20 animate-pulse">
+                    Esperando confirmación de la contraparte (US-10)
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-                <div className="w-8 h-8 rounded-full bg-tertiary flex items-center justify-center text-on-tertiary font-bold text-xs">MH</div>
-                <div className="text-sm">
-                  <span className="text-on-surface-variant">Intercambio con: </span>
-                  <span className="text-white font-bold">{match.studentB}</span>
+            {/* Exchange Grid */}
+            <div className="p-8 flex-1 flex flex-col justify-center">
+              <div className="grid grid-cols-11 items-center gap-6">
+                {/* User Course */}
+                <div className="col-span-5">
+                  <div className="mb-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tú entregas</span>
+                  </div>
+                  <div className="bg-slate-900/50 rounded-2xl p-6 border-l-4 border-indigo-500 group hover:bg-slate-900 transition-all">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+                        <span className="material-symbols-outlined">security</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">{selectedMatch.subjectGive}</h3>
+                        <p className="text-xs text-slate-400">{selectedMatch.timeGive}</p>
+                        <div className="mt-4 flex gap-2">
+                          <span className="text-[9px] bg-slate-800 text-slate-300 px-2 py-1 rounded">Aula {selectedMatch.classroomGive || 'TBA'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Swap Icon */}
+                <div className="col-span-1 flex justify-center">
+                  <div className="w-12 h-12 rounded-full bg-primary-container shadow-lg shadow-indigo-500/40 flex items-center justify-center transform hover:rotate-180 transition-transform duration-500 cursor-pointer">
+                    <span className="material-symbols-outlined text-on-primary-container font-bold">swap_horiz</span>
+                  </div>
+                </div>
+
+                {/* Peer Course */}
+                <div className="col-span-5">
+                  <div className="mb-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tú recibes</span>
+                  </div>
+                  <div className="bg-slate-900/50 rounded-2xl p-6 border-l-4 border-cyan-500 group hover:bg-slate-900 transition-all">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400">
+                        <span className="material-symbols-outlined">dns</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">{selectedMatch.subjectReceive}</h3>
+                        <p className="text-xs text-slate-400">{selectedMatch.timeReceive}</p>
+                        <div className="mt-4 flex gap-2">
+                          <span className="text-[9px] bg-slate-800 text-slate-300 px-2 py-1 rounded">Lab {selectedMatch.classroomReceive || 'TBA'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div className="p-3 bg-slate-950/50 rounded-xl border border-white/5 font-mono text-[10px] text-primary/70 break-all">
-                Safety Hash: {match.hash}
-              </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {!confirmedMatches.includes(match.id) ? (
-                <button 
-                  onClick={() => handleConfirm(match.id)}
-                  disabled={isProcessing}
-                  className="w-full bg-primary text-on-primary py-3 rounded-xl font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined">handshake</span>
-                  Confirmar Intercambio (US-10)
-                </button>
-              ) : !formalizedMatches[match.id] ? (
-                <div className="space-y-3">
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 text-xs font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined">check_circle</span>
-                    Esperando confirmación bilateral...
-                  </div>
+            {/* Footer Actions */}
+            <div className="p-8 border-t border-white/5 bg-white/[0.01]">
+              <div className="flex gap-6 relative">
+                {selectedMatch.status === 'MATCH' && (
+                  <>
+                    <button 
+                      onMouseEnter={() => setShowWarning(true)}
+                      onMouseLeave={() => setShowWarning(false)}
+                      onClick={handleConfirm}
+                      disabled={isProcessing}
+                      className="flex-1 py-4 bg-primary text-on-primary font-bold rounded-xl flex items-center justify-center gap-3 transition-all hover:brightness-110 shadow-xl shadow-indigo-500/10"
+                    >
+                      <span className="material-symbols-outlined">handshake</span>
+                      Confirmar Intercambio (US-10)
+                    </button>
+                    {showWarning && (
+                      <div className="absolute -top-16 left-0 right-0 p-3 bg-slate-900 border border-white/10 rounded-xl text-[10px] text-slate-300 animate-fade-in shadow-2xl">
+                        ⚠️ Al confirmar, te comprometes legalmente a realizar este cambio una vez la otra parte acepte.
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {selectedMatch.status === 'PENDIENTE' && (
+                  <button disabled className="flex-1 py-4 bg-slate-800 text-slate-500 font-bold rounded-xl flex items-center justify-center gap-3 cursor-not-allowed">
+                    <span className="material-symbols-outlined animate-spin">sync</span>
+                    Esperando a {selectedMatch.peerName}...
+                  </button>
+                )}
+
+                {selectedMatch.status === 'APROBADO' && (
                   <button 
-                    onClick={() => handleFormalize(match.id)}
+                    onClick={handleFormalize}
                     disabled={isProcessing}
-                    className="w-full bg-tertiary text-on-tertiary py-3 rounded-xl font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-tertiary/20"
+                    className="flex-1 py-4 bg-tertiary text-on-tertiary font-bold rounded-xl flex items-center justify-center gap-3 transition-all hover:brightness-110 shadow-xl shadow-tertiary/20"
                   >
                     <span className="material-symbols-outlined">verified</span>
                     Formalizar con Sello Digital (US-11)
                   </button>
-                </div>
-              ) : (
-                <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-400 text-center space-y-2">
-                  <div className="font-bold">Intercambio Formalizado</div>
-                  <div className="text-[10px] font-mono opacity-80">TX-ID: {formalizedMatches[match.id]}</div>
-                </div>
-              )}
+                )}
+
+                {selectedMatch.status === 'FORMALIZADO' && (
+                  <div className="flex-1 py-4 bg-green-500/20 border border-green-500/40 text-green-400 font-bold rounded-xl flex items-center justify-center gap-3">
+                    <span className="material-symbols-outlined">verified_user</span>
+                    ¡INTERCAMBIO EXITOSO!
+                  </div>
+                )}
+
+                <button className="px-8 py-4 border border-error/30 text-error hover:bg-error/10 font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                  Rechazar
+                </button>
+              </div>
+              <p className="text-center mt-6 text-[10px] text-slate-500 uppercase tracking-widest">
+                Protocolo de seguridad US-10 activo. Los cambios se reflejarán tras la confirmación mutua.
+              </p>
             </div>
           </div>
-        ))}
-      </div>
+        ) : (
+          <div className="glass-panel h-full rounded-3xl flex flex-col items-center justify-center text-center opacity-40">
+            <span className="material-symbols-outlined text-6xl mb-4">move_to_inbox</span>
+            <p className="text-lg font-bold">Selecciona un match para ver los detalles</p>
+            <p className="text-sm">Aquí gestionarás la confirmación bilateral US-10.</p>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

@@ -29,10 +29,15 @@ export const generateScheduleProposals = async (studentId: string) => {
   return await response.json(); 
 };
 
-// US-10: Confirmación Bilateral de Swap
-export const confirmSwap = async (matchId: string, studentId: string) => {
-  const response = await api.patch('/swaps/confirm', { matchId, studentId });
-  return response.data;
+// US-10: Confirmación Bilateral de Swap (Confirmación Mutua)
+export const confirmSwapMatch = async (matchId: string, studentId: string) => {
+  const response = await fetch(`http://localhost:3000/api/swaps/confirm`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ matchId, studentId })
+  });
+  if (!response.ok) throw new Error('Error al confirmar el match');
+  return await response.json(); // Devuelve "PENDIENTE" o "APROBADO"
 };
 
 // US-11: Formalización Legal (Sello Digital)
