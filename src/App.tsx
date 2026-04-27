@@ -1,6 +1,21 @@
-import React from 'react'
+import { useState } from 'react'
+import { MarketplacePublish } from './components/MarketplacePublish'
+import { MarketplaceExplore } from './components/MarketplaceExplore'
+import { MarketplaceMatch } from './components/MarketplaceMatch'
 
 function App() {
+  const [currentView, setCurrentView] = useState<'menu' | 'us12_publish' | 'us12_explore' | 'us12_match'>('menu');
+
+  if (currentView === 'us12_publish') {
+    return <MarketplacePublish onBack={() => setCurrentView('menu')} onExplore={() => setCurrentView('us12_explore')} />;
+  }
+  if (currentView === 'us12_explore') {
+    return <MarketplaceExplore onBack={() => setCurrentView('us12_publish')} onMatch={() => setCurrentView('us12_match')} />;
+  }
+  if (currentView === 'us12_match') {
+    return <MarketplaceMatch onBack={() => setCurrentView('us12_explore')} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       <header className="mb-12 text-center animate-fade-in">
@@ -36,7 +51,7 @@ function App() {
           </div>
           <h3 className="text-xl font-bold mb-3">Marketplace</h3>
           <p className="text-slate-400 mb-6 flex-grow">Publica cupos que no te sirven y encuentra intercambios proactivos.</p>
-          <button className="btn-primary w-full">Ir al Mercado US-12</button>
+          <button className="btn-primary w-full" onClick={() => setCurrentView('us12_publish')}>Ir al Mercado US-12</button>
         </div>
       </main>
 
