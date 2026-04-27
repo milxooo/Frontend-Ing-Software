@@ -45,7 +45,7 @@ const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
             
             <h1 className="font-display text-5xl md:text-8xl leading-tight mb-8 tracking-tighter text-white">
               Smarter Scheduling.<br/>
-              <span className="bg-gradient-to-r from-primary to-tertiary bg-clip-text text-transparent italic">Infinite Possibilities.</span>
+              <span className="bg-linear-to-r from-primary to-tertiary bg-clip-text text-transparent italic">Infinite Possibilities.</span>
             </h1>
             
             <p className="text-on-surface-variant max-w-2xl mx-auto mb-12 text-lg md:text-xl leading-relaxed">
@@ -73,7 +73,7 @@ const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               alt="Digital light trails" 
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8z3Cz8Rn7YRkHNKufTKaFnMbYTqBZoULdY0uJpvB7myo3c495Doj2VAmEp0JA4H0XZFLZsTw2YvlqCdzP7L1hDypDld4UxMn0wpDy16TfE1xTU8e9raXAvoc37GAFBuQ4mYKZ5TtYoNoSMFhGDm4Mk5EmH57UjzUSV_EQ2D51xBQT8ant5lmAkjQvsPSCzFMQmiueGkO0dfjmbHMXrsijcep-sOQ3bv7Yhayl3WovrZ6fKHDz1zueOMJLIG17aCDe-zCr9jkQRqg"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-transparent"></div>
           </div>
         </section>
 
@@ -143,7 +143,7 @@ const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
         {/* CTA Section */}
         <section className="py-48 px-6">
-          <div className="max-w-7xl mx-auto rounded-[3rem] bg-gradient-to-br from-primary-container to-indigo-950 p-12 md:p-24 text-center relative overflow-hidden border border-white/10 shadow-3xl">
+          <div className="max-w-7xl mx-auto rounded-[3rem] bg-linear-to-br from-primary-container to-indigo-950 p-12 md:p-24 text-center relative overflow-hidden border border-white/10 shadow-3xl">
             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
             <div className="relative z-10">
               <h2 className="font-display text-4xl md:text-7xl text-white mb-10 tracking-tighter leading-none">Ready to redefine your institution?</h2>

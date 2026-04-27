@@ -32,7 +32,6 @@ const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [showTooltip, setShowTooltip] = useState<{ x: number, y: number, text: string } | null>(null);
 
   const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
   const hours = [
@@ -106,7 +105,7 @@ const ScheduleManager: React.FC = () => {
               return (
                 <div 
                   key={sIdx}
-                  className={`absolute left-1 right-1 rounded-xl p-2 flex flex-col justify-between transition-all shadow-lg border-l-4 bg-gradient-to-br ${
+                  className={`absolute left-1 right-1 rounded-xl p-2 flex flex-col justify-between transition-all shadow-lg border-l-4 bg-linear-to-br ${
                     subject.isConflict ? 'bg-error/20 border-error text-error z-20' : `${colorStyles} z-10`
                   }`}
                   style={{ top: pos.top, height: pos.height }}
@@ -180,7 +179,7 @@ const ScheduleManager: React.FC = () => {
             <button 
               key={p.id || idx}
               onClick={() => setActiveId(p.id || `p${idx}`)}
-              className={`flex-shrink-0 min-w-[180px] p-4 rounded-2xl transition-all duration-300 text-left border-2 ${
+              className={`shrink-0 min-w-[180px] p-4 rounded-2xl transition-all duration-300 text-left border-2 ${
                 activeId === (p.id || `p${idx}`) 
                   ? 'border-primary bg-primary/10 scale-[1.02]' 
                   : 'border-white/5 bg-slate-900/40 hover:border-white/10'

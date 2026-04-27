@@ -189,7 +189,7 @@ const FormalizationCertificate: React.FC<CertificateProps> = ({
               </span>
               {transactionId ? 'Registro Completado' : 'Formalizar Registro'}
               {status === 'APROBADO' && !transactionId && (
-                <div className="absolute top-0 -left-[100%] w-full h-full bg-white/20 skew-x-[-20deg] group-hover:left-[100%] transition-all duration-700 ease-in-out"></div>
+                <div className="absolute top-0 -left-full w-full h-full bg-white/20 skew-x-[-20deg] group-hover:left-full transition-all duration-700 ease-in-out"></div>
               )}
             </button>
           </div>

@@ -156,7 +156,7 @@ const SwapMarket: React.FC = () => {
         {selectedMatch ? (
           <div className="glass-panel h-full rounded-3xl flex flex-col overflow-hidden relative border-white/10 shadow-2xl">
             {/* Detail Header */}
-            <div className="p-8 border-b border-white/5 bg-white/[0.02]">
+            <div className="p-8 border-b border-white/5 bg-white/2">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-1">Detalles del Intercambio</h2>
@@ -228,7 +228,7 @@ const SwapMarket: React.FC = () => {
             </div>
 
             {/* Footer Actions */}
-            <div className="p-8 border-t border-white/5 bg-white/[0.01]">
+            <div className="p-8 border-t border-white/5 bg-white/1">
               <div className="flex gap-6 relative">
                 {selectedMatch.status === 'MATCH' && (
                   <>

@@ -28,7 +28,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
           </div>
         </div>
 
-        <nav className="flex-grow px-4 space-y-2">
+        <nav className="grow px-4 space-y-2">
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -53,10 +53,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
         <div className="p-6 mt-auto">
           <div className="bg-surface-container rounded-3xl p-4 border border-white/5 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-tertiary flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-tertiary flex items-center justify-center text-white font-bold">
                 SP
               </div>
-              <div className="flex-grow overflow-hidden">
+              <div className="grow overflow-hidden">
                 <div className="text-sm font-bold text-white truncate">Santiago Parra</div>
                 <div className="text-xs text-on-surface-variant truncate">Estudiante Ingeniería</div>
               </div>
@@ -74,7 +74,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow">
+      <main className="grow">
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-background/50 backdrop-blur-md sticky top-0 z-40">
           <div className="flex items-center gap-2">
             <span className="text-on-surface-variant capitalize">{activeSection}</span>
