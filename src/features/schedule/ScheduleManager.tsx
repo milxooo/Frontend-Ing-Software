@@ -24,12 +24,12 @@ interface Proposal {
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión Final Sin Errores Visuales)
+ * US-05: Arquitecto de Horarios (Versión Refactorizada con Colores)
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedProposalIdx, setSelectedProposalIdx] = useState(0);
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [propuestaActiva, setPropuestaActiva] = useState<Proposal | null>(null);
   const [showTooltip, setShowTooltip] = useState<{ x: number, y: number, text: string } | null>(null);
 
   const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -41,13 +41,23 @@ const ScheduleManager: React.FC = () => {
   const pxPerHour = 80;
   const startHour = 5;
 
-  // Función para normalizar texto (Quita acentos, espacios y pasa a minúsculas)
+  // Paleta de colores Premium
+  const getSubjectColor = (name: string) => {
+    const colors = [
+      'from-indigo-500/20 to-indigo-600/10 border-indigo-500/40 text-indigo-400',
+      'from-emerald-500/20 to-emerald-600/10 border-emerald-500/40 text-emerald-400',
+      'from-amber-500/20 to-amber-600/10 border-amber-500/40 text-amber-400',
+      'from-rose-500/20 to-rose-600/10 border-rose-500/40 text-rose-400',
+      'from-violet-500/20 to-violet-600/10 border-violet-500/40 text-violet-400',
+      'from-cyan-500/20 to-cyan-600/10 border-cyan-500/40 text-cyan-400',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   const normalize = (text: string) => {
-    return text
-      .toLowerCase()
-      .trim()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // Quita acentos
+    return text.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
   const handleGenerate = async () => {
@@ -56,7 +66,7 @@ const ScheduleManager: React.FC = () => {
       const data = await generateScheduleProposals('santiago-123');
       if (data && Array.isArray(data.proposals)) {
         setProposals(data.proposals);
-        setSelectedProposalIdx(0);
+        setPropuestaActiva(data.proposals[0]); // Seleccionamos la primera por defecto
       }
     } catch (error) {
       console.error('Error en US-05:', error);
@@ -67,24 +77,20 @@ const ScheduleManager: React.FC = () => {
 
   const calculatePosition = (startTime?: string, endTime?: string) => {
     if (!startTime || !endTime || !startTime.includes(':')) return { top: '0px', height: '0px' };
-    
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
-    
     const top = (startH - startHour + (startM || 0) / 60) * pxPerHour;
     const height = (endH - startH + ((endM || 0) - (startM || 0)) / 60) * pxPerHour;
-    
     return { top: `${top}px`, height: `${height}px` };
   };
 
   const renderScheduleBlocks = (day: string) => {
-    const activeProposal = proposals[selectedProposalIdx];
-    if (!activeProposal || !activeProposal.items) return null;
-
+    if (!propuestaActiva || !propuestaActiva.items) return null;
     const targetDay = normalize(day);
 
-    return activeProposal.items.flatMap((subject) => {
+    return propuestaActiva.items.flatMap((subject) => {
       if (!subject.schedule) return [];
+      const colorStyles = getSubjectColor(subject.name);
       
       return subject.schedule
         .filter((s) => {
@@ -101,10 +107,10 @@ const ScheduleManager: React.FC = () => {
           return (
             <div 
               key={`${subject.name}-${sIdx}`}
-              className={`absolute left-1 right-1 rounded-xl p-3 flex flex-col justify-between transition-all cursor-pointer shadow-lg border-2 ${
+              className={`absolute left-1 right-1 rounded-xl p-3 flex flex-col justify-between transition-all duration-300 shadow-lg border-l-4 bg-gradient-to-br ${
                 subject.isConflict 
-                  ? 'bg-error/20 border-error/50 z-20' 
-                  : 'bg-primary/10 border-primary/30 hover:bg-primary/20 z-10'
+                  ? 'bg-error/20 border-error text-error z-20' 
+                  : `${colorStyles} z-10 hover:scale-[1.02] hover:brightness-110`
               }`}
               style={{ top: pos.top, height: pos.height }}
               onMouseEnter={(e) => subject.isConflict && setShowTooltip({ 
@@ -115,15 +121,15 @@ const ScheduleManager: React.FC = () => {
               onMouseLeave={() => setShowTooltip(null)}
             >
               <div className="overflow-hidden">
-                <h4 className={`text-[10px] font-black leading-tight uppercase ${subject.isConflict ? 'text-error' : 'text-primary'}`}>
+                <h4 className="text-[10px] font-black leading-tight uppercase truncate">
                   {subject.name}
                 </h4>
-                <p className="text-[8px] text-slate-500 mt-1 truncate">
-                  {subject.classroom || 'SAP - SERGIO'}
+                <p className="text-[8px] opacity-70 mt-1 truncate">
+                  {subject.classroom || 'SAP SERGIO'}
                 </p>
               </div>
-              <div className="text-[9px] text-slate-400 font-mono font-bold">
-                {s.startTime}
+              <div className="text-[9px] font-mono font-bold opacity-80">
+                {s.startTime} - {s.endTime}
               </div>
             </div>
           );
@@ -136,11 +142,12 @@ const ScheduleManager: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
         <p className="text-on-surface-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm text-indigo-400">verified</span>
-          Mapeo de Horarios SAP Sergio Arboleda
+          <span className="material-symbols-outlined text-sm text-indigo-400">palette</span>
+          Mapeo de Colores Dinámico | Universidad Sergio Arboleda
         </p>
       </div>
 
+      {/* Grid Calendario */}
       <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
@@ -168,47 +175,41 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Propuestas Sin "Coso Gris" */}
+      {/* Propuestas Clickables */}
       <div className="mt-12 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-400">dashboard_customize</span>
-          Propuestas del Optimizador
+          <span className="material-symbols-outlined text-indigo-400">auto_awesome_motion</span>
+          Selecciona una Propuesta
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {proposals.length > 0 ? (
-            proposals.map((p, idx) => (
-              <button 
-                key={p.id || idx}
-                onClick={() => setSelectedProposalIdx(idx)}
-                className={`p-5 rounded-2xl transition-all duration-300 text-left border-2 ${
-                  selectedProposalIdx === idx 
-                    ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/10' 
-                    : 'border-white/5 bg-slate-900/40 hover:bg-slate-900 hover:border-white/20'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
-                    selectedProposalIdx === idx ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
-                  }`}>OPCIÓN {idx + 1}</span>
-                  <span className="text-sm font-black text-indigo-400">{p.score ? `${p.score.toFixed(1)}%` : '0%'}</span>
-                </div>
-                <h4 className={`text-sm font-bold mb-1 truncate ${selectedProposalIdx === idx ? 'text-white' : 'text-slate-400'}`}>{p.name || `Ruta ${idx + 1}`}</h4>
-                <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">event</span>
-                  {p.items?.length || 0} materias
-                </div>
-              </button>
-            ))
-          ) : (
-            <div className="col-span-5 p-12 rounded-3xl text-center bg-slate-900/20 border-2 border-dashed border-white/5 text-slate-500">
-              Genera propuestas para ver las opciones disponibles.
-            </div>
-          )}
+          {proposals.map((p, idx) => (
+            <button 
+              key={p.id || idx}
+              onClick={() => setPropuestaActiva(p)}
+              className={`p-5 rounded-2xl transition-all duration-300 text-left border-2 ${
+                propuestaActiva?.id === p.id || propuestaActiva?.name === p.name
+                  ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/10' 
+                  : 'border-white/5 bg-slate-900/40 hover:border-white/20'
+              }`}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
+                  propuestaActiva?.id === p.id ? 'bg-primary text-on-primary' : 'bg-slate-800 text-slate-500'
+                }`}>OPCIÓN {idx + 1}</span>
+                <span className="text-sm font-black text-indigo-400">{p.score ? `${p.score.toFixed(1)}%` : '0%'}</span>
+              </div>
+              <h4 className={`text-sm font-bold mb-1 truncate ${propuestaActiva?.id === p.id ? 'text-white' : 'text-slate-400'}`}>{p.name || `Ruta SAP ${idx + 1}`}</h4>
+              <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">calendar_view_week</span>
+                {p.items?.length || 0} materias
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Botón Flotante Limpio */}
+      {/* Botón Flotante */}
       <div className="fixed bottom-8 right-8 z-50">
         <button 
           onClick={handleGenerate}
