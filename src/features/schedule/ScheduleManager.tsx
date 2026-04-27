@@ -35,8 +35,8 @@ interface Proposal {
 }
 
 /**
- * US-05: Arquitecto de Horarios (Versión Quirúrgica)
- * Soluciona fallos de mapeo de datos y colapso de altura CSS.
+ * US-05: Arquitecto de Horarios (Versión Debug)
+ * Incluye un panel para ver el JSON real del backend.
  */
 const ScheduleManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -70,7 +70,6 @@ const ScheduleManager: React.FC = () => {
     let startStr = slot.startTime;
     let endStr = slot.endTime;
 
-    // Soporte para formato combinado "07:00-09:00"
     if (!startStr && (slot.time || slot.hora)) {
       const combined = (slot.time || slot.hora || "").split('-');
       startStr = combined[0];
@@ -119,7 +118,6 @@ const ScheduleManager: React.FC = () => {
     
     return propuestaActiva.items.flatMap((subject, sIdx) => {
       return (subject.schedule || []).map((slot, slotIdx) => {
-        // Match de día ultra-flexible
         const sDay = normalize(slot.day);
         const tDay = normalize(day);
         if (!sDay.includes(tDay.substring(0, 3)) && !tDay.includes(sDay.substring(0, 3))) return null;
@@ -180,6 +178,7 @@ const ScheduleManager: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in relative pb-20 max-w-full">
+      {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-4xl font-display font-black text-white mb-2 tracking-tight">Arquitecto IA [US-05]</h2>
@@ -202,6 +201,7 @@ const ScheduleManager: React.FC = () => {
         )}
       </div>
 
+      {/* MAIN CALENDAR GRID */}
       <div className="relative overflow-hidden bg-slate-900/40 rounded-3xl border border-white/10 shadow-2xl">
         {isLoading && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
@@ -210,7 +210,6 @@ const ScheduleManager: React.FC = () => {
         )}
 
         <div className="grid grid-cols-8 h-[1520px] overflow-y-auto custom-scrollbar relative">
-          {/* Hour Labels Column */}
           <div className="col-span-1 border-r border-white/5 bg-slate-950/20 z-10">
             <div className="h-16 border-b border-white/5"></div>
             {hours.map(h => (
@@ -218,12 +217,10 @@ const ScheduleManager: React.FC = () => {
             ))}
           </div>
 
-          {/* Days Grid */}
           <div className="col-span-7 grid grid-cols-7 h-full relative">
             {days.map((day, dayIdx) => (
               <div key={day} className={`relative h-full ${dayIdx < 6 ? 'border-r border-white/5' : ''}`}>
                 <div className="h-16 flex items-center justify-center border-b border-white/5 font-bold text-slate-500 uppercase tracking-widest text-[9px] bg-slate-950/20">{day}</div>
-                {/* MATTERS CONTAINER: Forcing explicit height to avoid collapse */}
                 <div className="relative w-full h-[1440px]">
                   {renderizarMateriaEnCalendario(day)}
                 </div>
@@ -233,6 +230,7 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
+      {/* PROPOSALS SELECTION */}
       <div className="mt-8 space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-400">auto_awesome_motion</span>
@@ -267,6 +265,21 @@ const ScheduleManager: React.FC = () => {
         </div>
       </div>
 
+      {/* DEBUG PANEL - TEMPORAL */}
+      <div className="mt-10 p-6 bg-black/80 backdrop-blur-xl rounded-3xl border border-primary/50 overflow-auto max-h-[400px] shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-primary font-bold flex items-center gap-2">
+            <span className="material-symbols-outlined">bug_report</span>
+            DEBUG: ESTRUCTURA DEL BACKEND
+          </h3>
+          <span className="text-[10px] text-slate-500 font-mono">Esto nos dirá por qué no se pinta</span>
+        </div>
+        <pre className="text-[10px] text-emerald-400 font-mono">
+          {proposals.length > 0 ? JSON.stringify(proposals[0], null, 2) : "// Esperando datos del Backend..."}
+        </pre>
+      </div>
+
+      {/* FLOATING ACTION BUTTON */}
       <div className="fixed bottom-8 right-8 z-50">
         <button 
           onClick={handleGenerate}
