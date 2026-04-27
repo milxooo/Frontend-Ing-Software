@@ -9,25 +9,19 @@ interface Schedule {
 
 interface SubjectItem {
   name: string;
+  day?: string;
+  startTime?: string;
+  endTime?: string;
   schedule?: Schedule[];
-  isConflict: boolean;
   professor?: string;
   classroom?: string;
-}
-
-interface ScoreBreakdown {
-  creditScore?: number;
-  gapScore?: number;
-  failedCourseScore?: number;
-  commuteScore?: number;
-  zoneScore?: number;
 }
 
 interface Proposal {
   id: string;
   name: string;
   score: number;
-  scoreBreakdown?: string | ScoreBreakdown;
+  scoreBreakdown?: any;
   items: SubjectItem[];
 }
 
@@ -46,13 +40,7 @@ const ScheduleManager: React.FC = () => {
   };
 
   const getSubjectColor = (name: any) => {
-    const colors = [
-      'bg-indigo-600 border-indigo-400 text-white',
-      'bg-emerald-600 border-emerald-400 text-white',
-      'bg-amber-600 border-amber-400 text-white',
-      'bg-rose-600 border-rose-400 text-white',
-      'bg-violet-600 border-violet-400 text-white',
-    ];
+    const colors = ['bg-indigo-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600', 'bg-violet-600'];
     let hash = 0;
     const sName = String(name || 'Materia');
     for (let i = 0; i < sName.length; i++) hash = sName.charCodeAt(i) + ((hash << 5) - hash);
@@ -62,11 +50,7 @@ const ScheduleManager: React.FC = () => {
   const parseTime = (timeStr: any) => {
     if (!timeStr) return null;
     const s = String(timeStr);
-    if (!s.includes(':')) {
-      const h = parseInt(s);
-      return isNaN(h) ? null : { h, m: 0 };
-    }
-    const parts = s.split(':');
+    const parts = s.includes(':') ? s.split(':') : [s, '0'];
     const h = parseInt(parts[0]);
     const m = parseInt(parts[1] || '0');
     return isNaN(h) ? null : { h, m };
@@ -94,7 +78,16 @@ const ScheduleManager: React.FC = () => {
     const targetDay = normalize(dayName);
     
     return propuestaActiva.items.flatMap((subject, sIdx) => {
-      const slots = Array.isArray(subject.schedule) ? subject.schedule : [];
+      // Caso 1: Los datos están directamente en el objeto (según ejemplo real del usuario)
+      // Caso 2: Los datos están en un array "schedule"
+      const slots: any[] = [];
+      if (subject.day && subject.startTime && subject.endTime) {
+        slots.push({ day: subject.day, startTime: subject.startTime, endTime: subject.endTime });
+      }
+      if (Array.isArray(subject.schedule)) {
+        slots.push(...subject.schedule);
+      }
+
       return slots.map((slot, slotIdx) => {
         if (normalize(slot.day) !== targetDay) return null;
 
@@ -103,25 +96,22 @@ const ScheduleManager: React.FC = () => {
         if (!start || !end) return null;
 
         const topPos = (start.h - startHour + start.m / 60) * pxPerHour;
-        const durationHours = (end.h + end.m / 60) - (start.h + start.m / 60);
-        const heightPos = durationHours * pxPerHour;
+        const duration = (end.h + end.m / 60) - (start.h + start.m / 60);
+        const heightPos = duration * pxPerHour;
 
-        const colorClass = getSubjectColor(subject.name);
+        const bgColor = getSubjectColor(subject.name);
 
         return (
           <div 
             key={`${sIdx}-${slotIdx}`}
-            className={`absolute left-1 right-1 rounded-lg p-2 border-l-4 shadow-2xl z-50 transition-transform hover:scale-105 ${colorClass}`}
+            className={`absolute left-1 right-1 rounded-xl p-3 shadow-2xl z-50 border-2 border-white/20 text-white ${bgColor}`}
             style={{ top: `${topPos}px`, height: `${Math.max(heightPos, 40)}px` }}
           >
             <div className="flex flex-col h-full justify-between overflow-hidden">
-              <div className="space-y-0.5">
-                <h4 className="text-[10px] font-black uppercase leading-none truncate">{subject.name}</h4>
-                <p className="text-[8px] opacity-80 truncate">{subject.professor}</p>
-              </div>
-              <div className="flex justify-between items-center text-[9px] font-mono font-bold border-t border-white/10 mt-1 pt-1">
+              <h4 className="text-[10px] font-black uppercase leading-none truncate">{subject.name}</h4>
+              <div className="flex justify-between items-center text-[9px] font-bold mt-1 pt-1 border-t border-white/10">
                 <span>{slot.startTime}</span>
-                <span className="opacity-60">{subject.classroom}</span>
+                <span className="opacity-80 truncate ml-2">{subject.classroom || 'Aula'}</span>
               </div>
             </div>
           </div>
@@ -130,57 +120,43 @@ const ScheduleManager: React.FC = () => {
     });
   };
 
-  const renderScoreBreakdown = (breakdown: any) => {
-    if (!breakdown) return "Analizando...";
-    if (typeof breakdown === 'object') {
-      return (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">
-          {Object.entries(breakdown).map(([key, val]: [string, any]) => (
-            <div key={key} className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[14px] text-primary">analytics</span>
-              <span className="text-slate-400 text-[10px] capitalize">{key.replace('Score', '')}:</span>
-              <span className="text-white font-bold">{typeof val === 'number' ? val.toFixed(1) : String(val)}</span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return String(breakdown);
-  };
-
   return (
     <div className="space-y-8 animate-fade-in pb-20">
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-3xl border border-white/5">
         <div>
           <h2 className="text-4xl font-black text-white tracking-tighter">Arquitecto IA [US-05]</h2>
-          <p className="text-slate-500 text-sm mt-1 flex items-center gap-2">
-            <span className="material-symbols-outlined text-indigo-400">shield</span>
-            Motor SAP Sergio Arboleda | v2.6
-          </p>
+          <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mt-1">Sincronización SAP Activa</p>
         </div>
 
         {propuestaActiva && (
-          <div className="glass-panel p-4 rounded-2xl border-primary/20 bg-primary/5 min-w-[300px]">
-            <h4 className="text-[10px] font-bold text-primary uppercase mb-1">AI Score Breakdown</h4>
-            <div className="text-[11px] text-slate-200">
-              {renderScoreBreakdown(propuestaActiva.scoreBreakdown)}
+          <div className="bg-white/5 p-4 rounded-2xl border border-white/10 min-w-[300px]">
+            <h4 className="text-[10px] font-bold text-slate-500 uppercase mb-2">Análisis de Optimización</h4>
+            <div className="grid grid-cols-2 gap-4 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="text-indigo-400 font-bold">Puntaje:</span>
+                <span className="text-white">{(propuestaActiva.score || 0).toFixed(1)}%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 font-bold">Clases:</span>
+                <span className="text-white">{propuestaActiva.items?.length}</span>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      <div className="relative overflow-hidden bg-slate-900/50 rounded-[2rem] border border-white/5 shadow-2xl">
+      <div className="relative overflow-hidden bg-slate-950 rounded-[2.5rem] border border-white/10 shadow-3xl">
         {isLoading && (
-          <div className="absolute inset-0 z-[60] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <span className="material-symbols-outlined text-6xl text-primary animate-spin">autorenew</span>
-              <p className="text-primary font-black uppercase tracking-widest text-xs">Optimizando Horario...</p>
+          <div className="absolute inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-indigo-400 font-black uppercase tracking-widest text-xs">Calculando Rutas...</p>
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-8 h-[1520px] overflow-y-auto">
-          <div className="col-span-1 border-r border-white/5 pt-16 bg-slate-950/40">
+          <div className="col-span-1 border-r border-white/5 pt-16">
             {hours.map(h => (
               <div key={h} className="h-[80px] flex items-center justify-end pr-4 text-slate-700 font-mono text-[10px] border-b border-white/5">{h}</div>
             ))}
@@ -189,7 +165,7 @@ const ScheduleManager: React.FC = () => {
           <div className="col-span-7 grid grid-cols-7 relative">
             {days.map((day) => (
               <div key={day} className="relative flex flex-col border-r border-white/5 min-h-[1520px]">
-                <div className="h-16 flex items-center justify-center border-b border-white/5 font-black text-slate-500 uppercase tracking-widest text-[10px] bg-slate-950/60 sticky top-0 z-40 backdrop-blur-md">{day}</div>
+                <div className="h-16 flex items-center justify-center border-b border-white/10 font-black text-slate-500 uppercase tracking-widest text-[10px] sticky top-0 z-40 bg-slate-950">{day}</div>
                 <div className="relative flex-1">
                   {renderizarMateriaEnCalendario(day)}
                 </div>
@@ -201,45 +177,39 @@ const ScheduleManager: React.FC = () => {
 
       <div className="space-y-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-400">dashboard_customize</span>
-          Opciones Generadas
+          <span className="material-symbols-outlined text-indigo-500">auto_awesome_motion</span>
+          Opciones de Horario
         </h3>
-        
-        <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar">
+        <div className="flex gap-4 overflow-x-auto pb-6">
           {proposals.map((p, idx) => (
             <button 
               key={String(p.id || idx)}
               onClick={() => setActiveId(String(p.id || `p${idx}`))}
-              className={`shrink-0 min-w-[240px] p-6 rounded-[2rem] transition-all duration-300 text-left border-2 ${
+              className={`shrink-0 min-w-[260px] p-6 rounded-[2rem] transition-all duration-300 text-left border-2 ${
                 activeId === String(p.id || `p${idx}`) 
-                  ? 'border-primary bg-primary/10 shadow-2xl shadow-primary/20' 
-                  : 'border-white/5 bg-slate-900/60 hover:border-white/10'
+                  ? 'border-indigo-500 bg-indigo-500/10 shadow-2xl' 
+                  : 'border-white/5 bg-slate-900/40 hover:border-white/10'
               }`}
             >
               <div className="flex justify-between items-center mb-4">
-                <span className={`text-[9px] font-black px-3 py-1 rounded-full ${
-                  activeId === String(p.id || `p${idx}`) ? 'bg-primary text-on-primary' : 'bg-white/5 text-slate-500'
-                }`}>OPCIÓN {idx + 1}</span>
+                <span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full text-slate-400">PROPUESTA {idx + 1}</span>
                 <span className="text-xl font-black text-white">{(p.score || 0).toFixed(1)}%</span>
               </div>
-              <h4 className="text-sm font-bold text-white mb-2 truncate">{p.name || 'Ruta Académica'}</h4>
-              <div className="text-[10px] text-slate-500 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">auto_stories</span>
-                {p.items?.length || 0} Materias
-              </div>
+              <h4 className="text-sm font-bold text-white mb-2">{p.name || 'Ruta Académica'}</h4>
+              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{p.items?.length} Asignaturas</p>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="fixed bottom-8 right-8 z-[70]">
+      <div className="fixed bottom-12 right-12 z-[110]">
         <button 
           onClick={handleGenerate}
           disabled={isLoading}
-          className="flex items-center gap-4 px-10 h-20 bg-primary text-white rounded-full shadow-[0_20px_50px_rgba(71,75,255,0.4)] hover:scale-105 active:scale-95 transition-all font-black text-xl"
+          className="flex items-center gap-4 px-12 h-20 bg-indigo-600 text-white rounded-full shadow-[0_20px_50px_rgba(79,70,229,0.5)] hover:scale-105 active:scale-95 transition-all font-black text-xl"
         >
-          <span className={`material-symbols-outlined text-3xl ${isLoading ? 'animate-spin' : ''}`}>autorenew</span>
-          Optimizar Ahora
+          <span className="material-symbols-outlined text-3xl">psychology</span>
+          OPTIMIZAR AHORA
         </button>
       </div>
     </div>
