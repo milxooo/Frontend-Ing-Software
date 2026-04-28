@@ -1,50 +1,98 @@
-import React from 'react'
+import { useState } from 'react';
+import './index.css';
+import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
+import US09IntercambioSecciones  from './pages/US09IntercambioSecciones';
 
-function App() {
+// ── Tabs definition ────────────────────────────────────────────────────────────
+type TabId = 'us08' | 'us09' | 'both';
+
+const TABS: { id: TabId; label: string; icon: string }[] = [
+  { id: 'us08', label: 'US-08 Secciones',   icon: '📋' },
+  { id: 'us09', label: 'US-09 Intercambio', icon: '🔁' },
+  { id: 'both', label: 'Vista Completa',    icon: '⚡' },
+];
+
+// ── App ────────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [activeTab, setActiveTab] = useState<TabId>('both');
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
-      <header className="mb-12 text-center animate-fade-in">
-        <h1 className="neon-text mb-2">Enrollment Optimizer</h1>
-        <p className="text-slate-400 text-lg">Plataforma Inteligente de Gestión Académica</p>
-      </header>
+    <>
+      {/* ── Navbar ── */}
+      <nav className="navbar" role="navigation" aria-label="Navegación principal">
+        <a className="navbar-brand" href="#" aria-label="Inicio">
+          <span className="navbar-dot" aria-hidden="true" />
+          Enrollment Optimizer
+        </a>
 
-      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full">
-        {/* US-01: Zonas Prohibidas */}
-        <div className="glass-panel p-8 flex flex-col items-center text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <div className="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
-            <span className="text-3xl">🚫</span>
-          </div>
-          <h3 className="text-xl font-bold mb-3">Zonas Prohibidas</h3>
-          <p className="text-slate-400 mb-6 flex-grow">Mapea tus compromisos laborales y de bienestar para optimizar tu tiempo.</p>
-          <button className="btn-primary w-full">Configurar US-01</button>
+        <div className="navbar-tabs" role="tablist" aria-label="Módulos">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              id={`tab-${tab.id}`}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
+              className={`navbar-tab${activeTab === tab.id ? ' active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* ── Content ── */}
+      <main className="app-wrapper">
+        {/* Hero */}
+        <header style={{ marginBottom: '0.5rem' }}>
+          <h1>
+            {activeTab === 'us08' && 'Secciones Disponibles'}
+            {activeTab === 'us09' && 'Intercambio de Secciones'}
+            {activeTab === 'both' && 'Gestión Académica'}
+          </h1>
+          <p style={{ color: 'var(--text-sub)', marginTop: '0.4rem', fontSize: '0.95rem' }}>
+            {activeTab === 'us08' && 'Consulta cupos disponibles por materia — endpoint GET /api/secciones/{materiaId}/disponibles'}
+            {activeTab === 'us09' && 'Registra solicitudes de intercambio con matching automático — endpoint POST /api/intercambios/registrar'}
+            {activeTab === 'both' && 'Plataforma inteligente · US-08 Cupos disponibles · US-09 Matching de intercambios'}
+          </p>
+        </header>
+
+        {/* Panels */}
+        <div
+          className="page-grid"
+          role="tabpanel"
+          id={`panel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+        >
+          {(activeTab === 'us08' || activeTab === 'both') && (
+            <US08SeccionesDisponibles />
+          )}
+          {(activeTab === 'us09' || activeTab === 'both') && (
+            <US09IntercambioSecciones />
+          )}
         </div>
 
-        {/* US-02: Sincronización Académica */}
-        <div className="glass-panel p-8 flex flex-col items-center text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/30">
-            <span className="text-3xl">🔄</span>
-          </div>
-          <h3 className="text-xl font-bold mb-3">Sincronización</h3>
-          <p className="text-slate-400 mb-6 flex-grow">Importa tu historial académico directamente desde el sistema universitario.</p>
-          <button className="btn-primary w-full">Sincronizar US-02</button>
-        </div>
-
-        {/* US-12: Marketplace de Cupos */}
-        <div className="glass-panel p-8 flex flex-col items-center text-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
-            <span className="text-3xl">🤝</span>
-          </div>
-          <h3 className="text-xl font-bold mb-3">Marketplace</h3>
-          <p className="text-slate-400 mb-6 flex-grow">Publica cupos que no te sirven y encuentra intercambios proactivos.</p>
-          <button className="btn-primary w-full">Ir al Mercado US-12</button>
-        </div>
+        {/* Footer */}
+        <footer style={{
+          marginTop: '3rem',
+          paddingTop: '1.5rem',
+          borderTop: '1px solid var(--glass-border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+          color: 'var(--text-muted)',
+          fontSize: '0.8rem',
+        }}>
+          <span>© 2026 Enrollment Optimizer · Ingeniería de Software</span>
+          <span style={{ display:'flex', gap:'1rem' }}>
+            <span>Backend: <code style={{ color:'var(--primary)', fontSize:'0.75rem' }}>localhost:8080</code></span>
+            <span>US-08 · US-09</span>
+          </span>
+        </footer>
       </main>
-
-      <footer className="mt-20 text-slate-500 text-sm">
-        © 2026 Arquitecto de Horarios • Ingeniería de Software
-      </footer>
-    </div>
-  )
+    </>
+  );
 }
-
-export default App
