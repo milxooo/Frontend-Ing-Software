@@ -5,39 +5,45 @@ import SyncHub from './features/sync/SyncHub';
 import ScheduleManager from './features/schedule/ScheduleManager';
 import SwapMarket from './features/marketplace/SwapMarket';
 import FormalizationCertificate from './features/swaps/FormalizationCertificate';
+import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
+import US09IntercambioSecciones from './pages/US09IntercambioSecciones';
 
-type ViewType = 'landing' | 'sync' | 'schedule' | 'inbox' | 'formalize' | 'profile';
+type ViewType = 'landing' | 'sync' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
 
-/**
- * App (Director de Orquesta)
- * Gestiona la transición Landing -> Dashboard y la navegación entre US.
- */
 const App: React.FC = () => {
   const [view, setView] = useState<ViewType>('landing');
 
-  // Transición desde la Landing Page
   if (view === 'landing') {
     return <LandingPage onStart={() => setView('sync')} />;
   }
 
-  // Mapeo de IDs del DashboardLayout a nuestros ViewTypes
   const handleNavigate = (id: string) => {
     if (id === 'academic') setView('sync');
+    else if (id === 'sections') setView('sections');
+    else if (id === 'swaps') setView('swaps');
     else if (id === 'scheduler') setView('schedule');
     else if (id === 'marketplace') setView('inbox');
     else if (id === 'documents') setView('formalize');
     else if (id === 'profile') setView('profile');
-    else setView('sync'); // Default
+    else setView('sync'); 
   };
 
-  // El Dashboard Maestro con el contenido de las Historias de Usuario
   return (
     <DashboardLayout 
-      activeSection={view === 'sync' ? 'academic' : view === 'schedule' ? 'scheduler' : view === 'inbox' ? 'marketplace' : view === 'formalize' ? 'documents' : 'profile'} 
+      activeSection={
+        view === 'sync' ? 'academic' : 
+        view === 'sections' ? 'sections' :
+        view === 'swaps' ? 'swaps' :
+        view === 'schedule' ? 'scheduler' : 
+        view === 'inbox' ? 'marketplace' : 
+        view === 'formalize' ? 'documents' : 'profile'
+      } 
       onNavigate={handleNavigate}
       onLogout={() => setView('landing')}
     >
       {view === 'sync' && <SyncHub />}
+      {view === 'sections' && <US08SeccionesDisponibles />}
+      {view === 'swaps' && <US09IntercambioSecciones />}
       {view === 'schedule' && <ScheduleManager />}
       {view === 'inbox' && <SwapMarket />}
       {view === 'formalize' && (
@@ -50,7 +56,6 @@ const App: React.FC = () => {
           status="APROBADO"
         />
       )}
-      {/* Fallback para perfil u otras vistas */}
       {view === 'profile' && (
         <div className="flex items-center justify-center min-h-[60vh] text-slate-500 italic">
           Configuraciones de Perfil (US-01/03) cargando...

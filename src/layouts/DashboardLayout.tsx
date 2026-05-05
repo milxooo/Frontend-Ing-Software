@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import NotificationCenter from '../features/notifications/NotificationCenter';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -8,9 +9,13 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSection, onNavigate, onLogout }) => {
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  
   const menuItems = [
     { id: 'overview', label: 'Resumen', icon: 'dashboard' },
     { id: 'academic', label: 'Carga Académica [US-02]', icon: 'account_balance' },
+    { id: 'sections', label: 'Secciones [US-08]', icon: 'list_alt' },
+    { id: 'swaps', label: 'Intercambios [US-09]', icon: 'swap_horiz' },
     { id: 'scheduler', label: 'Arquitecto IA [US-05]', icon: 'psychology' },
     { id: 'marketplace', label: 'Mercado Swaps [US-10/11]', icon: 'swap_horiz' },
     { id: 'documents', label: 'Documentos Oficiales [US-11]', icon: 'verified_user' },
@@ -89,7 +94,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               SIA Sincronizado
             </div>
-            <button className="material-symbols-outlined text-on-surface-variant hover:text-white transition-colors">notifications</button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="material-symbols-outlined text-on-surface-variant hover:text-white transition-colors relative"
+              >
+                notifications
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse"></span>
+              </button>
+              <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
+            </div>
           </div>
         </header>
 
