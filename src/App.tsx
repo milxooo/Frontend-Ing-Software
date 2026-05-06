@@ -1,98 +1,68 @@
-import { useState } from 'react';
-import './index.css';
+import React, { useState } from 'react';
+import LandingPage from './pages/LandingPage';
+import DashboardLayout from './layouts/DashboardLayout';
+import SyncHub from './features/sync/SyncHub';
+import ScheduleManager from './features/schedule/ScheduleManager';
+import SwapMarket from './features/marketplace/SwapMarket';
+import FormalizationCertificate from './features/swaps/FormalizationCertificate';
 import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
-import US09IntercambioSecciones  from './pages/US09IntercambioSecciones';
+import US09IntercambioSecciones from './pages/US09IntercambioSecciones';
 
-// ── Tabs definition ────────────────────────────────────────────────────────────
-type TabId = 'us08' | 'us09' | 'both';
+type ViewType = 'landing' | 'sync' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
 
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: 'us08', label: 'US-08 Secciones',   icon: '📋' },
-  { id: 'us09', label: 'US-09 Intercambio', icon: '🔁' },
-  { id: 'both', label: 'Vista Completa',    icon: '⚡' },
-];
+const App: React.FC = () => {
+  const [view, setView] = useState<ViewType>('landing');
 
-// ── App ────────────────────────────────────────────────────────────────────────
-export default function App() {
-  const [activeTab, setActiveTab] = useState<TabId>('both');
+  if (view === 'landing') {
+    return <LandingPage onStart={() => setView('sync')} />;
+  }
+
+  const handleNavigate = (id: string) => {
+    if (id === 'academic') setView('sync');
+    else if (id === 'sections') setView('sections');
+    else if (id === 'swaps') setView('swaps');
+    else if (id === 'scheduler') setView('schedule');
+    else if (id === 'marketplace') setView('inbox');
+    else if (id === 'documents') setView('formalize');
+    else if (id === 'profile') setView('profile');
+    else setView('sync'); 
+  };
 
   return (
-    <>
-      {/* ── Navbar ── */}
-      <nav className="navbar" role="navigation" aria-label="Navegación principal">
-        <a className="navbar-brand" href="#" aria-label="Inicio">
-          <span className="navbar-dot" aria-hidden="true" />
-          Enrollment Optimizer
-        </a>
-
-        <div className="navbar-tabs" role="tablist" aria-label="Módulos">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              id={`tab-${tab.id}`}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              aria-controls={`panel-${tab.id}`}
-              className={`navbar-tab${activeTab === tab.id ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
+    <DashboardLayout 
+      activeSection={
+        view === 'sync' ? 'academic' : 
+        view === 'sections' ? 'sections' :
+        view === 'swaps' ? 'swaps' :
+        view === 'schedule' ? 'scheduler' : 
+        view === 'inbox' ? 'marketplace' : 
+        view === 'formalize' ? 'documents' : 'profile'
+      } 
+      onNavigate={handleNavigate}
+      onLogout={() => setView('landing')}
+    >
+      {view === 'sync' && <SyncHub />}
+      {view === 'sections' && <US08SeccionesDisponibles />}
+      {view === 'swaps' && <US09IntercambioSecciones />}
+      {view === 'schedule' && <ScheduleManager />}
+      {view === 'inbox' && <SwapMarket />}
+      {view === 'formalize' && (
+        <FormalizationCertificate 
+          matchId="SW-98234-MART"
+          studentA="Roberto A. Martínez"
+          studentB="Elena L. García"
+          subjectA="Criptografía I"
+          subjectB="Sistemas Distribuidos"
+          status="APROBADO"
+        />
+      )}
+      {view === 'profile' && (
+        <div className="flex items-center justify-center min-h-[60vh] text-slate-500 italic">
+          Configuraciones de Perfil (US-01/03) cargando...
         </div>
-      </nav>
-
-      {/* ── Content ── */}
-      <main className="app-wrapper">
-        {/* Hero */}
-        <header style={{ marginBottom: '0.5rem' }}>
-          <h1>
-            {activeTab === 'us08' && 'Secciones Disponibles'}
-            {activeTab === 'us09' && 'Intercambio de Secciones'}
-            {activeTab === 'both' && 'Gestión Académica'}
-          </h1>
-          <p style={{ color: 'var(--text-sub)', marginTop: '0.4rem', fontSize: '0.95rem' }}>
-            {activeTab === 'us08' && 'Consulta cupos disponibles por materia — endpoint GET /api/secciones/{materiaId}/disponibles'}
-            {activeTab === 'us09' && 'Registra solicitudes de intercambio con matching automático — endpoint POST /api/intercambios/registrar'}
-            {activeTab === 'both' && 'Plataforma inteligente · US-08 Cupos disponibles · US-09 Matching de intercambios'}
-          </p>
-        </header>
-
-        {/* Panels */}
-        <div
-          className="page-grid"
-          role="tabpanel"
-          id={`panel-${activeTab}`}
-          aria-labelledby={`tab-${activeTab}`}
-        >
-          {(activeTab === 'us08' || activeTab === 'both') && (
-            <US08SeccionesDisponibles />
-          )}
-          {(activeTab === 'us09' || activeTab === 'both') && (
-            <US09IntercambioSecciones />
-          )}
-        </div>
-
-        {/* Footer */}
-        <footer style={{
-          marginTop: '3rem',
-          paddingTop: '1.5rem',
-          borderTop: '1px solid var(--glass-border)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '0.5rem',
-          color: 'var(--text-muted)',
-          fontSize: '0.8rem',
-        }}>
-          <span>© 2026 Enrollment Optimizer · Ingeniería de Software</span>
-          <span style={{ display:'flex', gap:'1rem' }}>
-            <span>Backend: <code style={{ color:'var(--primary)', fontSize:'0.75rem' }}>localhost:8080</code></span>
-            <span>US-08 · US-09</span>
-          </span>
-        </footer>
-      </main>
-    </>
+      )}
+    </DashboardLayout>
   );
-}
+};
+
+export default App;

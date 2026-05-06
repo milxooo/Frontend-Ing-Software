@@ -1,208 +1,63 @@
-import React, { useState } from 'react';
-import type { IntercambioResult } from '../types';
-import { registrarIntercambio } from '../services/intercambio.service';
+import React from 'react';
 
-// ── Component ─────────────────────────────────────────────────────────────────
+const MOCK_MATCHES = [
+  { id: 'MT-452', subject: 'Cálculo III', section: 'SEC-04-A', status: 'MATCH ENCONTRADO', student: 'Juan Pérez', time: 'Hace 5 min' },
+  { id: 'MT-881', subject: 'Física I', section: 'SEC-09-B', status: 'PENDIENTE', student: 'Ana García', time: 'Hace 1h' },
+];
 
-export default function US09IntercambioSecciones() {
-  const [form, setForm] = useState({
-    estudianteId:    '',
-    materiaDeseadaId: '',
-    materiaOfrecidaId: '',
-  });
-  const [resultado, setResultado] = useState<IntercambioResult | null>(null);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const estudianteId     = Number(form.estudianteId);
-    const materiaDeseadaId  = Number(form.materiaDeseadaId);
-    const materiaOfrecidaId = Number(form.materiaOfrecidaId);
-
-    if (!estudianteId || !materiaDeseadaId || !materiaOfrecidaId) {
-      setError('Todos los campos son obligatorios y deben ser números positivos.');
-      return;
-    }
-    if (materiaDeseadaId === materiaOfrecidaId) {
-      setError('La materia deseada y la ofrecida no pueden ser la misma.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setResultado(null);
-
-    try {
-      const data = await registrarIntercambio({ estudianteId, materiaDeseadaId, materiaOfrecidaId });
-      setResultado(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al conectar con el servidor.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleReset = () => {
-    setForm({ estudianteId: '', materiaDeseadaId: '', materiaOfrecidaId: '' });
-    setResultado(null);
-    setError(null);
-  };
-
-  const isMatched   = resultado?.estado === 'MATCHED';
-  const isPendiente = resultado?.estado === 'PENDIENTE';
-
+const US09IntercambioSecciones: React.FC = () => {
   return (
-    <section className="card animate-in" style={{ padding: '2rem', animationDelay: '0.1s' }}>
-
-      {/* Header */}
-      <div className="section-header">
-        <div className="section-icon tertiary">🔁</div>
-        <div>
-          <span className="section-badge tertiary">US-09</span>
-          <h2>Intercambio de Secciones</h2>
-          <p style={{ color: 'var(--text-sub)', fontSize: '0.875rem', marginTop: 4 }}>
-            Solicita un intercambio: el sistema busca un match automáticamente.
-          </p>
-        </div>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="space-y-2">
+        <h1 className="text-6xl font-manrope font-black text-white tracking-tighter">Historial de Intercambios</h1>
+        <p className="text-xl text-slate-400 max-w-2xl leading-relaxed">
+          Gestiona tus solicitudes de permuta y revisa los matches generados por el motor de optimización.
+        </p>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label" htmlFor="us09-estudiante-id">
-            ID del Estudiante
-          </label>
-          <input
-            id="us09-estudiante-id"
-            name="estudianteId"
-            type="number"
-            min="1"
-            className="form-input"
-            placeholder="Ej. 1"
-            value={form.estudianteId}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="us09-materia-deseada">
-            Materia que Deseas
-          </label>
-          <input
-            id="us09-materia-deseada"
-            name="materiaDeseadaId"
-            type="number"
-            min="1"
-            className="form-input"
-            placeholder="Ej. 5"
-            value={form.materiaDeseadaId}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="us09-materia-ofrecida">
-            Materia que Ofreces
-          </label>
-          <input
-            id="us09-materia-ofrecida"
-            name="materiaOfrecidaId"
-            type="number"
-            min="1"
-            className="form-input"
-            placeholder="Ej. 3"
-            value={form.materiaOfrecidaId}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            id="us09-btn-registrar"
-            type="submit"
-            className={`btn btn-tertiary btn-full${loading ? ' btn-loading' : ''}`}
-            disabled={loading}
-          >
-            {!loading && <span>🚀</span>}
-            {loading ? 'Procesando…' : 'Registrar Intercambio'}
-          </button>
-          {resultado && (
-            <button
-              id="us09-btn-reset"
-              type="button"
-              className="btn btn-outlined"
-              onClick={handleReset}
-              title="Nueva solicitud"
-            >
-              ↺
-            </button>
-          )}
-        </div>
-      </form>
-
-      {/* Error */}
-      {error && (
-        <div className="alert alert-error" style={{ marginTop: '1rem' }} role="alert">
-          <span>⚠️</span> {error}
-        </div>
-      )}
-
-      {/* Result */}
-      {resultado && (
-        <div className="result-box">
-          {/* Status */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <span style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: '0.95rem' }}>
-              Resultado del Matching
-            </span>
-            <span className={`status-badge ${isMatched ? 'matched' : 'pendiente'}`}>
-              {isMatched ? '✓ MATCHED' : '⏳ PENDIENTE'}
-            </span>
-          </div>
-
-          {/* Info rows */}
-          <div className="result-box-row">
-            <span>ID Solicitud</span>
-            <span>#{resultado.id}</span>
-          </div>
-          <div className="result-box-row">
-            <span>Estudiante</span>
-            <span>#{resultado.estudianteId}</span>
-          </div>
-          <div className="result-box-row">
-            <span>Materia deseada</span>
-            <span>#{resultado.materiaDeseadaId}</span>
-          </div>
-          <div className="result-box-row">
-            <span>Materia ofrecida</span>
-            <span>#{resultado.materiaOfrecidaId}</span>
-          </div>
-
-          <div className="divider" style={{ margin: '0.85rem 0' }} />
-
-          {/* Context message */}
-          {isMatched && (
-            <div className="alert alert-success" role="status">
-              <span>🎉</span>
-              ¡Match exitoso! Tu intercambio ha sido confirmado automáticamente.
+      <div className="grid grid-cols-1 gap-4">
+        {MOCK_MATCHES.map((m) => (
+          <div key={m.id} className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-3xl flex items-center justify-between group hover:border-primary/30 transition-all">
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined text-3xl">swap_horiz</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{m.id}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{m.status}</span>
+                </div>
+                <h3 className="text-xl font-bold text-white">{m.subject}</h3>
+                <p className="text-sm text-slate-500">{m.section} • Solicitado por {m.student}</p>
+              </div>
             </div>
-          )}
-          {isPendiente && (
-            <div className="alert alert-warning" role="status">
-              <span>⏳</span>
-              Solicitud en cola. Te notificaremos cuando encontremos un match.
+            <div className="flex flex-col items-end gap-3">
+              <span className="text-xs text-slate-500 font-mono">{m.time}</span>
+              <button className="bg-primary text-slate-950 px-6 py-2 rounded-xl text-xs font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20">
+                Ver Detalles
+              </button>
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-indigo-500/5 border border-indigo-500/10 p-8 rounded-3xl flex items-center gap-6">
+        <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <span className="material-symbols-outlined text-4xl animate-pulse">notifications_active</span>
         </div>
-      )}
-    </section>
+        <div>
+          <h4 className="text-lg font-bold text-white">Alertas de Intercambio Activas</h4>
+          <p className="text-sm text-slate-400 max-w-lg">
+            El sistema está escaneando continuamente la base de datos de inscripciones para encontrar permutaciones que se ajusten a tus preferencias de horario.
+          </p>
+        </div>
+        <button className="ml-auto bg-white/5 text-white px-6 py-3 rounded-2xl text-sm font-bold border border-white/10 hover:bg-white/10">
+          Configurar Alertas
+        </button>
+      </div>
+    </div>
   );
-}
+};
+
+export default US09IntercambioSecciones;
