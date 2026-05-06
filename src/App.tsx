@@ -7,8 +7,9 @@ import SwapMarket from './features/marketplace/SwapMarket';
 import FormalizationCertificate from './features/swaps/FormalizationCertificate';
 import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
 import US09IntercambioSecciones from './pages/US09IntercambioSecciones';
+import { AcademicPriority } from './features/academic-priority';
 
-type ViewType = 'landing' | 'sync' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
+type ViewType = 'landing' | 'sync' | 'priority' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewType>('landing');
@@ -19,6 +20,7 @@ const App: React.FC = () => {
 
   const handleNavigate = (id: string) => {
     if (id === 'academic') setView('sync');
+    else if (id === 'priority') setView('priority');
     else if (id === 'sections') setView('sections');
     else if (id === 'swaps') setView('swaps');
     else if (id === 'scheduler') setView('schedule');
@@ -32,6 +34,7 @@ const App: React.FC = () => {
     <DashboardLayout 
       activeSection={
         view === 'sync' ? 'academic' : 
+        view === 'priority' ? 'priority' :
         view === 'sections' ? 'sections' :
         view === 'swaps' ? 'swaps' :
         view === 'schedule' ? 'scheduler' : 
@@ -42,6 +45,7 @@ const App: React.FC = () => {
       onLogout={() => setView('landing')}
     >
       {view === 'sync' && <SyncHub />}
+      {view === 'priority' && <AcademicPriority />}
       {view === 'sections' && <US08SeccionesDisponibles />}
       {view === 'swaps' && <US09IntercambioSecciones />}
       {view === 'schedule' && <ScheduleManager />}

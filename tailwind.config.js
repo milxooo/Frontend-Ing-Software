@@ -8,6 +8,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        app: {
+          bg:          "#020617",
+          surface:     "#0f172a",
+          card:        "#1e293b",
+          border:      "#334155",
+          accent:      "#6366f1",
+          accentHover: "#4f46e5",
+          textMain:    "#f8fafc",
+          textMuted:   "#94a3b8",
+          danger:      "#ef4444",
+          warning:     "#f59e0b",
+          success:     "#10b981",
+        },
         "tertiary-fixed": "#ffdcc5",
         "on-error-container": "#ffdad6",
         "on-tertiary-fixed": "#301400",

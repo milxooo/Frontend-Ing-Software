@@ -14,6 +14,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
   const menuItems = [
     { id: 'overview', label: 'Resumen', icon: 'dashboard' },
     { id: 'academic', label: 'Carga Académica [US-02]', icon: 'account_balance' },
+    { id: 'priority', label: 'Priorización [US-07]', icon: 'bolt' },
     { id: 'sections', label: 'Secciones [US-08]', icon: 'list_alt' },
     { id: 'swaps', label: 'Intercambios [US-09]', icon: 'swap_horiz' },
     { id: 'scheduler', label: 'Arquitecto IA [US-05]', icon: 'psychology' },

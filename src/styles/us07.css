@@ -1,0 +1,55 @@
+/* US-07 Panel de Riesgo Académico — Styles */
+
+/* Semicircular gauge */
+.gauge-arc {
+  background: conic-gradient(
+    from 225deg,
+    #10b981 0deg,
+    #f59e0b 90deg,
+    #ef4444 180deg,
+    transparent 180deg
+  );
+  border-radius: 50%;
+}
+
+.gauge-inner {
+  background-color: #0f172a;
+  border-radius: 50%;
+}
+
+/* Custom scrollbar */
+.us07-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.us07-scroll::-webkit-scrollbar-track {
+  background: #020617;
+}
+.us07-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+.us07-scroll::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Glowing accent button */
+.us07-glow-btn {
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+  transition: box-shadow 0.3s, background-color 0.3s;
+}
+.us07-glow-btn:hover {
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.7);
+}
+
+/* Glowing progress bar */
+.us07-progress-glow {
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* Subject card hover */
+.us07-subject-row {
+  transition: border-color 0.2s;
+}
+.us07-subject-row:hover {
+  border-color: rgba(51, 65, 85, 0.8);
+}
