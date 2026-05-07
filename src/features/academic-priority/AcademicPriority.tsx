@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import '../../styles/us07.css';
+import { PrioritySelection } from './PrioritySelection';
+import { SmartMatch } from './SmartMatch';
 
 /* ── Types ──────────────────────────────────────────────────── */
 type CriticalityLevel = 'CRÍTICO' | 'ALTO' | 'MEDIO' | 'BAJO';
@@ -365,17 +367,9 @@ export const AcademicPriority: React.FC = () => {
       <div className="flex flex-1 overflow-hidden pt-[57px]">
         <US07Sidebar active={section} onChange={setSection} />
 
-        {section === 'risk' && <RiskPanel />}
-
-        {section !== 'risk' && (
-          <main className="flex-1 overflow-y-auto bg-app-bg flex items-center justify-center">
-            <div className="text-center">
-              <i className="fa-solid fa-wrench text-4xl text-app-textMuted mb-4" />
-              <p className="text-app-textMuted text-lg font-medium">Sección en desarrollo</p>
-              <p className="text-app-textMuted/60 text-sm mt-1">Esta vista estará disponible próximamente.</p>
-            </div>
-          </main>
-        )}
+        {section === 'risk'       && <RiskPanel />}
+        {section === 'priority'   && <PrioritySelection />}
+        {section === 'smartmatch' && <SmartMatch />}
       </div>
     </div>
   );
