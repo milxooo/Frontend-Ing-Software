@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { generateScheduleProposals } from '../../services/api';
 
 interface MatchSubject {
   name: string;
@@ -24,58 +25,8 @@ interface ScheduleMatch {
   tag: 'ÓPTIMO' | 'RECOMENDADO' | 'ALTERNATIVO';
 }
 
-const MATCHES: ScheduleMatch[] = [
-  {
-    id: 'match-a',
-    score: 94,
-    label: 'Horario A — Ruta Crítica',
-    description: 'Maximiza la resolución de materias reprobadas con mayor IC. Ideal para reducir el retraso de 2.5 semestres.',
-    gapScore: 92,
-    creditScore: 88,
-    commuteScore: 78,
-    totalCredits: 10,
-    conflicts: 0,
-    tag: 'ÓPTIMO',
-    subjects: [
-      { name: 'Cálculo Diferencial', code: 'MAT301', ic: 0.95, schedule: 'Lun/Mié 08:00–10:00', room: 'A-201', professor: 'Dr. Rivera', slots: 3 },
-      { name: 'Física Mecánica',     code: 'FIS201', ic: 0.78, schedule: 'Mar/Jue 10:00–11:30', room: 'B-105', professor: 'Dra. Salcedo', slots: 8 },
-      { name: 'Estructuras de Datos',code: 'PROG301',ic: 0.62, schedule: 'Vie 07:00–10:00',     room: 'Lab-3', professor: 'Ing. Torres', slots: 15 },
-    ],
-  },
-  {
-    id: 'match-b',
-    score: 81,
-    label: 'Horario B — Balance Carga',
-    description: 'Distribuye las materias críticas con una menor carga diaria. Reduce riesgo de reprobación por exceso de trabajo.',
-    gapScore: 85,
-    creditScore: 76,
-    commuteScore: 91,
-    totalCredits: 10,
-    conflicts: 1,
-    tag: 'RECOMENDADO',
-    subjects: [
-      { name: 'Cálculo Diferencial', code: 'MAT301', ic: 0.95, schedule: 'Mar/Jue 14:00–16:00', room: 'A-310', professor: 'MSc. Gómez', slots: 7 },
-      { name: 'Física Mecánica',     code: 'FIS201', ic: 0.78, schedule: 'Lun/Mié 11:00–12:30', room: 'B-202', professor: 'Dr. Castro', slots: 12 },
-      { name: 'Estructuras de Datos',code: 'PROG301',ic: 0.62, schedule: 'Jue 15:00–18:00',     room: 'Lab-1', professor: 'Ing. Torres', slots: 20 },
-    ],
-  },
-  {
-    id: 'match-c',
-    score: 67,
-    label: 'Horario C — Alternativo',
-    description: 'Opción con horarios nocturnos para compatibilidad laboral. Menor eficiencia de huecos pero mayor flexibilidad.',
-    gapScore: 60,
-    creditScore: 70,
-    commuteScore: 95,
-    totalCredits: 7,
-    conflicts: 0,
-    tag: 'ALTERNATIVO',
-    subjects: [
-      { name: 'Cálculo Diferencial', code: 'MAT301', ic: 0.95, schedule: 'Lun/Mié 18:00–20:00', room: 'C-101', professor: 'MSc. Pérez', slots: 14 },
-      { name: 'Estructuras de Datos',code: 'PROG301',ic: 0.62, schedule: 'Mar 17:00–20:00',     room: 'Lab-2', professor: 'Ing. Ríos', slots: 18 },
-    ],
-  },
-];
+/* ── Fallback Data ─────────────────────────────────────────── */
+const FALLBACK_MATCHES: ScheduleMatch[] = [];
 
 function tagStyle(tag: ScheduleMatch['tag']) {
   if (tag === 'ÓPTIMO')      return 'bg-app-success/20 text-app-success border-app-success/40';
@@ -187,13 +138,35 @@ function MatchCard({ match, selected, onSelect }: { match: ScheduleMatch; select
 }
 
 export function SmartMatch() {
-  const [selected, setSelected] = useState<string>('match-a');
+  const [selected, setSelected] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [matches, setMatches] = useState<ScheduleMatch[]>([]);
 
-  function handleGenerate() {
+  useEffect(() => {
+    handleGenerate();
+  }, []);
+
+  async function handleGenerate() {
     setGenerating(true);
-    setTimeout(() => setGenerating(false), 1800);
+    try {
+      // Intentar obtener propuestas del backend
+      const response = await generateScheduleProposals('STU-001');
+      if (response && response.data) {
+        setMatches(response.data);
+        if (response.data.length > 0) setSelected(response.data[0].id);
+      } else {
+        // Si no hay backend, dejamos vacío (según petición de quitar estáticos)
+        setMatches([]);
+      }
+    } catch (err) {
+      console.error('Error generating schedules:', err);
+      setMatches([]);
+    } finally {
+      setGenerating(false);
+    }
   }
+
+  const selectedMatch = matches.find(m => m.id === selected);
 
   return (
     <main className="flex-1 overflow-y-auto bg-app-bg p-8 us07-scroll">
@@ -229,21 +202,32 @@ export function SmartMatch() {
 
         {/* Match cards */}
         <div className="space-y-5">
-          {MATCHES.map(m => (
-            <MatchCard
-              key={m.id}
-              match={m}
-              selected={selected === m.id}
-              onSelect={() => setSelected(m.id)}
-            />
-          ))}
+          {generating ? (
+            <div className="py-20 text-center text-app-textMuted">
+              <i className="fa-solid fa-microchip fa-spin text-3xl mb-4 block text-indigo-500" />
+              El motor IA está analizando miles de combinaciones...
+            </div>
+          ) : matches.length === 0 ? (
+            <div className="py-20 text-center text-app-textMuted border border-dashed border-app-border rounded-2xl">
+              No se encontraron propuestas de horario.
+            </div>
+          ) : (
+            matches.map(m => (
+              <MatchCard
+                key={m.id}
+                match={m}
+                selected={selected === m.id}
+                onSelect={() => setSelected(m.id)}
+              />
+            ))
+          )}
         </div>
 
         {/* Confirm CTA */}
         <div className="mt-8 bg-app-surface border border-app-border rounded-2xl p-5 flex items-center justify-between gap-4">
           <div>
             <p className="text-white font-semibold text-sm">
-              Horario seleccionado: <span className="text-indigo-300">{MATCHES.find(m => m.id === selected)?.label}</span>
+              Horario seleccionado: <span className="text-indigo-300">{selectedMatch?.label || 'Ninguno'}</span>
             </p>
             <p className="text-app-textMuted text-xs mt-0.5">Al confirmar, se iniciará el proceso de reserva de cupos para las materias incluidas.</p>
           </div>

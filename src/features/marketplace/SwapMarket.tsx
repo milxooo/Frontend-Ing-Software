@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { confirmSwapMatch, rejectSwap } from '../../services/api';
+import { confirmSwapMatch, rejectSwap, getMarketplaceOffers } from '../../services/api';
 import FormalizationCertificate from '../swaps/FormalizationCertificate';
 
 interface SwapMatch {
@@ -17,51 +17,41 @@ interface SwapMatch {
   transactionId?: string;
 }
 
-/**
- * US-10/11: Centro de Confirmación de Swaps
- * Versión Corregida: Sin errores de sintaxis y flujo de formalización integrado.
- */
 const SwapMarket: React.FC = () => {
   const [selectedMatch, setSelectedMatch] = useState<SwapMatch | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
-
-  const [matches, setMatches] = useState<SwapMatch[]>([
-    { 
-      id: 'SW-98234-MART', 
-      peerName: 'Elena Martínez', 
-      peerMajor: 'Ingeniería Informática',
-      subjectGive: 'Criptografía I',
-      subjectReceive: 'Sistemas Distribuidos',
-      timeGive: 'Mar 10:00 - 12:00',
-      timeReceive: 'Jue 14:00 - 16:00',
-      status: 'APROBADO',
-      timestamp: 'Hace 12m',
-      classroomGive: 'Aula 402',
-      classroomReceive: 'Laboratorio L1'
-    },
-    { 
-      id: 'SW-98235-RUIZ', 
-      peerName: 'Carlos Ruiz', 
-      peerMajor: 'Ciencia de Datos',
-      subjectGive: 'Álgebra Lineal',
-      subjectReceive: 'Cálculo IV',
-      timeGive: 'Lun 08:00 - 10:00',
-      timeReceive: 'Mie 08:00 - 10:00',
-      status: 'MATCH',
-      timestamp: 'Hace 1h'
-    }
-  ]);
+  const [matches, setMatches] = useState<SwapMatch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const pendingMatch = matches.find(m => m.status === 'PENDIENTE');
-      if (pendingMatch) {
-        console.log('US-10: Polling state for match:', pendingMatch.id);
+    const loadMarketplace = async () => {
+      try {
+        // En una implementación real, se filtraría por la materia de interés
+        // Aquí pedimos ofertas generales para mostrar que está conectado
+        const response = await getMarketplaceOffers('MAT301'); 
+        if (response.success && response.data) {
+          const mapped = response.data.map((off: any): SwapMatch => ({
+            id: off.id,
+            peerName: 'Estudiante de la Red',
+            peerMajor: 'Ingeniería',
+            subjectGive: off.courseId,
+            subjectReceive: 'Tu Materia',
+            timeGive: 'Horario por confirmar',
+            timeReceive: 'Horario por confirmar',
+            status: 'MATCH',
+            timestamp: 'Reciente',
+          }));
+          setMatches(mapped);
+        }
+      } catch (err) {
+        console.error('Error loading marketplace:', err);
+      } finally {
+        setIsLoading(false);
       }
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [matches]);
+    };
+    loadMarketplace();
+  }, []);
 
   const handleReject = async () => {
     if (!selectedMatch) return;

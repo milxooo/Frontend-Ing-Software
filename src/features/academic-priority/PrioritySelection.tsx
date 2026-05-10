@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getCriticality } from '../../services/api';
 
 type FilterType = 'all' | 'key' | 'lowslots' | 'compatible';
 
@@ -19,56 +20,8 @@ interface PrioritySubject {
   compatible: boolean;
 }
 
-const PRIORITY_SUBJECTS: PrioritySubject[] = [
-  {
-    id: 'mat301',
-    name: 'Cálculo Diferencial',
-    code: 'MAT301',
-    credits: 4,
-    semester: 3,
-    attempts: 2,
-    ic: 0.95,
-    icLabel: 'CRÍTICO',
-    isKey: true,
-    slotsAvailable: 3,
-    slotsTotal: 35,
-    schedules: ['Lun 08:00', 'Mié 14:00'],
-    unlocks: ['Cálculo Integral', 'Física II', 'Ecuaciones Dif.'],
-    compatible: true,
-  },
-  {
-    id: 'fis201',
-    name: 'Física Mecánica',
-    code: 'FIS201',
-    credits: 3,
-    semester: 2,
-    attempts: 1,
-    ic: 0.78,
-    icLabel: 'ALTO',
-    isKey: true,
-    slotsAvailable: 8,
-    slotsTotal: 40,
-    schedules: ['Mar 10:00', 'Jue 10:00'],
-    unlocks: ['Física II', 'Termodinámica'],
-    compatible: false,
-  },
-  {
-    id: 'prog301',
-    name: 'Estructuras de Datos',
-    code: 'PROG301',
-    credits: 3,
-    semester: 4,
-    attempts: 1,
-    ic: 0.62,
-    icLabel: 'ALTO',
-    isKey: false,
-    slotsAvailable: 15,
-    slotsTotal: 35,
-    schedules: ['Vie 07:00', 'Mié 09:00'],
-    unlocks: ['Algoritmos Avanzados'],
-    compatible: true,
-  },
-];
+/* ── Fallback Data ─────────────────────────────────────────── */
+const FALLBACK_PRIORITY: PrioritySubject[] = [];
 
 function icColor(label: PrioritySubject['icLabel']) {
   if (label === 'CRÍTICO') return { text: 'text-app-danger', border: 'border-app-danger', bg: 'bg-app-danger/10' };
@@ -191,13 +144,60 @@ const FILTERS: { id: FilterType; label: string; icon: string }[] = [
 
 export function PrioritySelection() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [subjects, setSubjects] = useState<PrioritySubject[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = PRIORITY_SUBJECTS.filter(s => {
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const response = await getCriticality('STU-001', 'CS-2024');
+        if (response.success && response.data) {
+          const mapped = response.data.map((r: any): PrioritySubject => {
+            let label: 'CRÍTICO' | 'ALTO' | 'MEDIO' = 'MEDIO';
+            if (r.criticalityIndex >= 0.8) label = 'CRÍTICO';
+            else if (r.criticalityIndex >= 0.5) label = 'ALTO';
+
+            return {
+              id: r.courseId,
+              name: r.courseName,
+              code: r.courseId,
+              credits: 3,
+              semester: 4,
+              attempts: 1,
+              ic: r.criticalityIndex,
+              icLabel: label,
+              isKey: r.unlockedCoursesCount > 0,
+              slotsAvailable: Math.floor(Math.random() * 20), // Mocked for UI
+              slotsTotal: 40,
+              schedules: ['Horario por asignar'],
+              unlocks: r.unlockedCourses || [],
+              compatible: true,
+            };
+          });
+          setSubjects(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load priority data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const filtered = subjects.filter(s => {
     if (activeFilter === 'key')        return s.isKey;
     if (activeFilter === 'lowslots')   return s.slotsAvailable <= 5;
     if (activeFilter === 'compatible') return s.compatible;
     return true;
   });
+
+  const avgIC = subjects.length > 0 
+    ? (subjects.reduce((acc, s) => acc + s.ic, 0) / subjects.length).toFixed(2)
+    : '0.00';
+  
+  const keyCount = subjects.filter(s => s.isKey).length;
+  const criticalSlots = subjects.filter(s => s.slotsAvailable <= 5).length;
 
   return (
     <main className="flex-1 overflow-y-auto bg-app-bg p-8 us07-scroll">
@@ -211,9 +211,9 @@ export function PrioritySelection() {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { label: 'IC Promedio', value: '0.78', icon: 'fa-solid fa-chart-line', color: 'text-app-warning' },
-            { label: 'Materias Llave', value: '2', icon: 'fa-solid fa-key', color: 'text-app-warning' },
-            { label: 'Cupos Críticos', value: '3', icon: 'fa-solid fa-bolt', color: 'text-app-danger' },
+            { label: 'IC Promedio', value: avgIC, icon: 'fa-solid fa-chart-line', color: 'text-app-warning' },
+            { label: 'Materias Llave', value: keyCount.toString(), icon: 'fa-solid fa-key', color: 'text-app-warning' },
+            { label: 'Cupos Críticos', value: criticalSlots.toString(), icon: 'fa-solid fa-bolt', color: 'text-app-danger' },
           ].map(stat => (
             <div key={stat.label} className="bg-app-surface border border-app-border rounded-xl p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-lg bg-app-card flex items-center justify-center shrink-0">
@@ -248,10 +248,17 @@ export function PrioritySelection() {
 
         {/* Cards */}
         <div className="space-y-4">
-          {filtered.map((s, i) => (
-            <PriorityCard key={s.id} subject={s} rank={i + 1} />
-          ))}
-          {filtered.length === 0 && (
+          {loading ? (
+             <div className="py-20 text-center text-app-textMuted">
+                <i className="fa-solid fa-spinner fa-spin text-3xl mb-4 block text-indigo-500" />
+                Sincronizando prioridades con el historial académico...
+             </div>
+          ) : (
+            filtered.map((s, i) => (
+              <PriorityCard key={s.id} subject={s} rank={i + 1} />
+            ))
+          )}
+          {!loading && filtered.length === 0 && (
             <div className="text-center py-16 text-app-textMuted">
               <i className="fa-solid fa-filter text-3xl mb-3 block" />
               <p>No hay materias con este filtro.</p>

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../styles/us07.css';
 import { PrioritySelection } from './PrioritySelection';
 import { SmartMatch } from './SmartMatch';
+import { getCriticality } from '../../services/api';
 
 /* ── Types ──────────────────────────────────────────────────── */
 type CriticalityLevel = 'CRÍTICO' | 'ALTO' | 'MEDIO' | 'BAJO';
@@ -17,39 +18,8 @@ interface Subject {
   isKey: boolean;
 }
 
-/* ── Static Data ─────────────────────────────────────────────── */
-const SUBJECTS: Subject[] = [
-  {
-    id: 'mat301',
-    name: 'Cálculo Diferencial',
-    code: 'MAT301',
-    credits: 4,
-    attempts: 2,
-    criticality: 'CRÍTICO',
-    score: 95,
-    isKey: true,
-  },
-  {
-    id: 'fis201',
-    name: 'Física Mecánica',
-    code: 'FIS201',
-    credits: 3,
-    attempts: 1,
-    criticality: 'ALTO',
-    score: 78,
-    isKey: true,
-  },
-  {
-    id: 'prog301',
-    name: 'Estructuras de Datos',
-    code: 'PROG301',
-    credits: 3,
-    attempts: 1,
-    criticality: 'ALTO',
-    score: 62,
-    isKey: false,
-  },
-];
+/* ── Initial Data Fallback ──────────────────────────────────── */
+const FALLBACK_SUBJECTS: Subject[] = [];
 
 /* ── Helper: badge styling ───────────────────────────────────── */
 function criticalityBadge(level: CriticalityLevel) {
@@ -121,7 +91,7 @@ function SubjectCard({ subject }: { subject: Subject }) {
   );
 }
 
-function RiskGauge() {
+function RiskGauge({ delay }: { delay: number }) {
   return (
     <div className="bg-app-surface rounded-2xl border border-app-border p-6 flex flex-col relative overflow-hidden">
       {/* Header */}
@@ -142,13 +112,19 @@ function RiskGauge() {
           className="gauge-inner absolute inset-[15px] flex flex-col items-center justify-center pt-8"
           style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
         >
-          <span className="text-4xl font-bold text-white">2.5</span>
+          <span className="text-4xl font-bold text-white">{delay.toFixed(1)}</span>
           <span className="text-[10px] font-semibold text-app-textMuted tracking-widest mt-1 text-center">
             SEMESTRES EN RIESGO
           </span>
         </div>
         {/* Indicator dot */}
-        <div className="absolute top-[20%] right-[30%] w-3 h-3 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10" />
+        <div 
+          className="absolute w-3 h-3 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10 transition-all duration-1000" 
+          style={{ 
+            top: `${20 + (4 - delay) * 15}%`, 
+            right: `${30 + (delay - 2) * 20}%` 
+          }} 
+        />
         {/* Labels */}
         <span className="absolute bottom-2 left-0 text-xs text-app-textMuted">0</span>
         <span className="absolute top-10 left-12 text-xs text-app-textMuted">1</span>
@@ -178,11 +154,30 @@ function RiskGauge() {
 }
 
 function StudentInfo() {
+  const [student, setStudent] = useState({
+    name: 'Cargando...',
+    major: '...',
+    semester: '...',
+    period: '...'
+  });
+
+  useEffect(() => {
+    // Simulación de carga de perfil (US-01/03)
+    setTimeout(() => {
+      setStudent({
+        name: 'Santiago Morales',
+        major: 'Ingeniería de Sistemas',
+        semester: '5',
+        period: '2025-2'
+      });
+    }, 1000);
+  }, []);
+
   const fields = [
-    { label: 'Nombre',         value: 'Santiago Morales' },
-    { label: 'Carrera',        value: 'Ingeniería de Sistemas' },
-    { label: 'Semestre Actual', value: '5' },
-    { label: 'Período',        value: '2025-2' },
+    { label: 'Nombre',         value: student.name },
+    { label: 'Carrera',        value: student.major },
+    { label: 'Semestre Actual', value: student.semester },
+    { label: 'Período',        value: student.period },
   ];
 
   return (
@@ -200,7 +195,7 @@ function StudentInfo() {
             }`}
           >
             <span className="text-sm text-app-textMuted">{field.label}</span>
-            <span className="text-sm font-medium text-white">{field.value}</span>
+            <span className={`text-sm font-medium text-white ${student.name === 'Cargando...' ? 'animate-pulse' : ''}`}>{field.value}</span>
           </div>
         ))}
       </div>
@@ -262,6 +257,51 @@ function US07Sidebar({
 
 /* ── Main Panel ──────────────────────────────────────────────── */
 function RiskPanel() {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [maxDelay, setMaxDelay] = useState(0);
+
+  useEffect(() => {
+    const fetchCriticality = async () => {
+      try {
+        const response = await getCriticality('STU-001', 'CS-2024');
+        if (response.success && response.data) {
+          let currentMaxDelay = 0;
+          const finalMapped = response.data.map((report: any) => {
+            if (report.potentialDelaySemesters > currentMaxDelay) {
+              currentMaxDelay = report.potentialDelaySemesters;
+            }
+            
+            let level: CriticalityLevel = 'BAJO';
+            if (report.criticalityIndex >= 0.8) level = 'CRÍTICO';
+            else if (report.criticalityIndex >= 0.5) level = 'ALTO';
+            else if (report.criticalityIndex >= 0.2) level = 'MEDIO';
+
+            return {
+              id: report.courseId,
+              name: report.courseName,
+              code: report.courseId,
+              credits: 3,
+              attempts: 1,
+              criticality: level,
+              score: Math.round(report.criticalityIndex * 100),
+              isKey: report.unlockedCoursesCount > 0,
+            };
+          });
+          setSubjects(finalMapped);
+          setMaxDelay(currentMaxDelay);
+        }
+      } catch (error) {
+        console.error('Error fetching criticality data:', error);
+        setSubjects(FALLBACK_SUBJECTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCriticality();
+  }, []);
+
   return (
     <main className="flex-1 overflow-y-auto bg-app-bg p-8 us07-scroll">
       <div className="max-w-6xl mx-auto">
@@ -276,7 +316,7 @@ function RiskPanel() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left column */}
           <div className="lg:col-span-5 space-y-6">
-            <RiskGauge />
+            <RiskGauge delay={maxDelay} />
             <StudentInfo />
           </div>
 
@@ -297,9 +337,20 @@ function RiskPanel() {
 
             {/* Subject list */}
             <div className="space-y-4 flex-1">
-              {SUBJECTS.map((s) => (
-                <SubjectCard key={s.id} subject={s} />
-              ))}
+              {loading ? (
+                <div className="py-12 text-center text-sm text-app-textMuted animate-pulse">
+                  <i className="fa-solid fa-circle-notch fa-spin text-indigo-500 mb-3 text-2xl block" />
+                  Calculando Índice de Criticidad...
+                </div>
+              ) : subjects.length === 0 ? (
+                <div className="py-12 text-center text-sm text-app-textMuted">
+                  No hay materias en riesgo detectadas.
+                </div>
+              ) : (
+                subjects.map((s) => (
+                  <SubjectCard key={s.id} subject={s} />
+                ))
+              )}
             </div>
 
             {/* Footer */}

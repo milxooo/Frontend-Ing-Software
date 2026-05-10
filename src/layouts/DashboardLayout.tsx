@@ -20,6 +20,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
     { id: 'scheduler', label: 'Arquitecto IA [US-05]', icon: 'psychology' },
     { id: 'marketplace', label: 'Mercado Swaps [US-10/11]', icon: 'swap_horiz' },
     { id: 'documents', label: 'Documentos Oficiales [US-11]', icon: 'verified_user' },
+    { id: 'reports', label: 'Reportes [Decanos]', icon: 'monitoring' },
     { id: 'profile', label: 'Mi Perfil [US-01/03]', icon: 'person' },
   ];
 

@@ -7,9 +7,9 @@ import SwapMarket from './features/marketplace/SwapMarket';
 import FormalizationCertificate from './features/swaps/FormalizationCertificate';
 import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
 import US09IntercambioSecciones from './pages/US09IntercambioSecciones';
-import { AcademicPriority } from './features/academic-priority';
+import AdminReports from './features/admin/AdminReports';
 
-type ViewType = 'landing' | 'sync' | 'priority' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
+type ViewType = 'landing' | 'sync' | 'priority' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps' | 'reports';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewType>('landing');
@@ -26,6 +26,7 @@ const App: React.FC = () => {
     else if (id === 'scheduler') setView('schedule');
     else if (id === 'marketplace') setView('inbox');
     else if (id === 'documents') setView('formalize');
+    else if (id === 'reports') setView('reports');
     else if (id === 'profile') setView('profile');
     else setView('sync'); 
   };
@@ -39,7 +40,8 @@ const App: React.FC = () => {
         view === 'swaps' ? 'swaps' :
         view === 'schedule' ? 'scheduler' : 
         view === 'inbox' ? 'marketplace' : 
-        view === 'formalize' ? 'documents' : 'profile'
+        view === 'formalize' ? 'documents' : 
+        view === 'reports' ? 'reports' : 'profile'
       } 
       onNavigate={handleNavigate}
       onLogout={() => setView('landing')}
@@ -60,6 +62,7 @@ const App: React.FC = () => {
           status="APROBADO"
         />
       )}
+      {view === 'reports' && <AdminReports />}
       {view === 'profile' && (
         <div className="flex items-center justify-center min-h-[60vh] text-slate-500 italic">
           Configuraciones de Perfil (US-01/03) cargando...
