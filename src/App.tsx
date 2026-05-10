@@ -7,8 +7,9 @@ import SwapMarket from './features/marketplace/SwapMarket';
 import FormalizationCertificate from './features/swaps/FormalizationCertificate';
 import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
 import US09IntercambioSecciones from './pages/US09IntercambioSecciones';
+import US13Sugerencias from './pages/US13Sugerencias';
 
-type ViewType = 'landing' | 'sync' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
+type ViewType = 'landing' | 'sync' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps' | 'suggestions';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewType>('landing');
@@ -25,6 +26,7 @@ const App: React.FC = () => {
     else if (id === 'marketplace') setView('inbox');
     else if (id === 'documents') setView('formalize');
     else if (id === 'profile') setView('profile');
+    else if (id === 'suggestions') setView('suggestions');
     else setView('sync'); 
   };
 
@@ -36,7 +38,8 @@ const App: React.FC = () => {
         view === 'swaps' ? 'swaps' :
         view === 'schedule' ? 'scheduler' : 
         view === 'inbox' ? 'marketplace' : 
-        view === 'formalize' ? 'documents' : 'profile'
+        view === 'formalize' ? 'documents' :
+        view === 'suggestions' ? 'suggestions' : 'profile'
       } 
       onNavigate={handleNavigate}
       onLogout={() => setView('landing')}
@@ -44,6 +47,7 @@ const App: React.FC = () => {
       {view === 'sync' && <SyncHub />}
       {view === 'sections' && <US08SeccionesDisponibles />}
       {view === 'swaps' && <US09IntercambioSecciones />}
+      {view === 'suggestions' && <US13Sugerencias />}
       {view === 'schedule' && <ScheduleManager />}
       {view === 'inbox' && <SwapMarket />}
       {view === 'formalize' && (
