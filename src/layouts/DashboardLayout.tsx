@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import NotificationCenter, { INITIAL_NOTIFS } from '../features/notifications/NotificationCenter';
+import NotificationCenter from '../features/notifications/NotificationCenter';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSection, onNavigate, onLogout }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const unreadCount = INITIAL_NOTIFS.filter(n => !n.read).length;
+  const [unreadCount, setUnreadCount] = useState(0);
   
   const menuItems = [
     { id: 'overview', label: 'Resumen', icon: 'dashboard' },
@@ -112,6 +112,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
                 isOpen={isNotifOpen} 
                 onClose={() => setIsNotifOpen(false)} 
                 onNavigate={onNavigate}
+                onUnreadCountChange={setUnreadCount}
               />
             </div>
           </div>
