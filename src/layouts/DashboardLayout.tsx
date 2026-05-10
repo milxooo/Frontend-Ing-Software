@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import NotificationCenter from '../features/notifications/NotificationCenter';
+import NotificationCenter, { INITIAL_NOTIFS } from '../features/notifications/NotificationCenter';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -10,6 +10,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSection, onNavigate, onLogout }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const unreadCount = INITIAL_NOTIFS.filter(n => !n.read).length;
   
   const menuItems = [
     { id: 'overview', label: 'Resumen', icon: 'dashboard' },
@@ -20,6 +21,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
     { id: 'scheduler', label: 'Arquitecto IA [US-05]', icon: 'psychology' },
     { id: 'marketplace', label: 'Mercado Swaps [US-10/11]', icon: 'swap_horiz' },
     { id: 'documents', label: 'Documentos Oficiales [US-11]', icon: 'verified_user' },
+    { id: 'suggestions', label: 'Sugerencias [US-13]', icon: 'lightbulb' },
     { id: 'profile', label: 'Mi Perfil [US-01/03]', icon: 'person' },
   ];
 
@@ -101,7 +103,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
                 className="material-symbols-outlined text-on-surface-variant hover:text-white transition-colors relative"
               >
                 notifications
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-primary text-slate-950 text-[9px] font-black rounded-full border-2 border-background flex items-center justify-center px-0.5 animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
               <NotificationCenter 
                 isOpen={isNotifOpen} 

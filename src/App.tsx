@@ -7,9 +7,20 @@ import SwapMarket from './features/marketplace/SwapMarket';
 import FormalizationCertificate from './features/swaps/FormalizationCertificate';
 import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
 import US09IntercambioSecciones from './pages/US09IntercambioSecciones';
+import US13Sugerencias from './pages/US13Sugerencias';
 import { AcademicPriority } from './features/academic-priority';
 
-type ViewType = 'landing' | 'sync' | 'priority' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
+type ViewType =
+  | 'landing'
+  | 'sync'
+  | 'priority'
+  | 'schedule'
+  | 'inbox'
+  | 'formalize'
+  | 'profile'
+  | 'sections'
+  | 'swaps'
+  | 'suggestions';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewType>('landing');
@@ -27,20 +38,22 @@ const App: React.FC = () => {
     else if (id === 'marketplace') setView('inbox');
     else if (id === 'documents') setView('formalize');
     else if (id === 'profile') setView('profile');
-    else setView('sync'); 
+    else if (id === 'suggestions') setView('suggestions');
+    else setView('sync');
   };
 
   return (
-    <DashboardLayout 
+    <DashboardLayout
       activeSection={
-        view === 'sync' ? 'academic' : 
+        view === 'sync' ? 'academic' :
         view === 'priority' ? 'priority' :
         view === 'sections' ? 'sections' :
         view === 'swaps' ? 'swaps' :
-        view === 'schedule' ? 'scheduler' : 
-        view === 'inbox' ? 'marketplace' : 
-        view === 'formalize' ? 'documents' : 'profile'
-      } 
+        view === 'schedule' ? 'scheduler' :
+        view === 'inbox' ? 'marketplace' :
+        view === 'formalize' ? 'documents' :
+        view === 'suggestions' ? 'suggestions' : 'profile'
+      }
       onNavigate={handleNavigate}
       onLogout={() => setView('landing')}
     >
@@ -48,10 +61,11 @@ const App: React.FC = () => {
       {view === 'priority' && <AcademicPriority />}
       {view === 'sections' && <US08SeccionesDisponibles />}
       {view === 'swaps' && <US09IntercambioSecciones />}
+      {view === 'suggestions' && <US13Sugerencias />}
       {view === 'schedule' && <ScheduleManager />}
       {view === 'inbox' && <SwapMarket />}
       {view === 'formalize' && (
-        <FormalizationCertificate 
+        <FormalizationCertificate
           matchId="SW-98234-MART"
           studentA="Roberto A. Martínez"
           studentB="Elena L. García"
