@@ -95,4 +95,24 @@ export const sendChatMessage = async (sessionId: string, message: string) => {
   return response.data;
 };
 
+/* ── US-12/15: Sistema de Notificaciones ── */
+export const notificacionesService = {
+  getAll: async (studentId: string) => {
+    const response = await api.get(`/notificaciones/${studentId}`);
+    return response.data;
+  },
+  marcarLeida: async (id: number) => {
+    const response = await api.patch(`/notificaciones/${id}/leida`);
+    return response.data;
+  },
+  marcarTodasLeidas: async (studentId: string) => {
+    const response = await api.patch(`/notificaciones/${studentId}/leer-todas`);
+    return response.data;
+  },
+  borrarTodas: async (studentId: string) => {
+    const response = await api.delete(`/notificaciones/${studentId}`);
+    return response.data;
+  }
+};
+
 export default api;
