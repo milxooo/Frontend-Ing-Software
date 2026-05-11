@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { sugerenciasService, SugerenciaAPI, TipoSugerencia, TiempoLibreAPI } from '../services/api';
+import { sugerenciasService } from '../services/api';
+import type { SugerenciaAPI, TipoSugerencia, TiempoLibreAPI } from '../services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

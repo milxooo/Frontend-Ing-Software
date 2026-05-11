@@ -31,12 +31,12 @@ const US08SeccionesDisponibles: React.FC = () => {
     setHasSearched(true);
     
     try {
-      const response = await fetch(`http://localhost:8080/api/secciones/${materiaId}/disponibles`);
+      const response = await fetch(`http://localhost:3000/api/secciones/${materiaId}/disponibles`);
       if (!response.ok) throw new Error('Error al conectar con el servidor');
       const data = await response.json();
       setSections(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +110,12 @@ const US08SeccionesDisponibles: React.FC = () => {
           <div className="space-y-3">
             {isLoading ? (
               <div className="py-20 text-center animate-pulse text-xs text-slate-500 tracking-widest">SINCRONIZANDO CON SIA...</div>
+            ) : error ? (
+              <div className="p-8 text-center bg-red-500/5 rounded-2xl border border-red-500/20 flex flex-col items-center gap-3">
+                <span className="material-symbols-outlined text-red-400 text-3xl">wifi_off</span>
+                <p className="text-sm text-red-400 font-medium">{error}</p>
+                <button onClick={handleSearch} className="text-xs text-primary font-bold hover:underline">Reintentar</button>
+              </div>
             ) : sections.length === 0 ? (
               <div className="p-12 text-center text-xs text-slate-500 bg-white/5 rounded-2xl border border-dashed border-white/10">No se detectaron cupos libres.</div>
             ) : (

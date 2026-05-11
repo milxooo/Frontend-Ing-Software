@@ -100,16 +100,17 @@ export interface TiempoLibreAPI {
 }
 
 // Helper fetch interno
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+async function apiFetch<T>(path: string, init?: { method?: string; body?: string }): Promise<T> {
   const res = await fetch(`http://localhost:3000/api${path}`, {
+    method: init?.method ?? 'GET',
     headers: { 'Content-Type': 'application/json' },
-    ...options,
+    body: init?.body,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: 'Error desconocido' }));
-    throw new Error(err.message ?? `HTTP ${res.status}`);
+    throw new Error((err as { message?: string }).message ?? `HTTP ${res.status}`);
   }
-  return res.json();
+  return res.json() as Promise<T>;
 }
 
 // ─── US-16: Servicio de Notificaciones ───────────────────────────────────────
@@ -126,6 +127,9 @@ export const notificacionesService = {
 
   marcarTodasLeidas: (estudianteId: string) =>
     apiFetch<{ ok: boolean; message: string; cantidad: number }>(`/notificaciones/${estudianteId}/leer-todas`, { method: 'PATCH' }),
+
+  borrarTodas: (estudianteId: string) =>
+    apiFetch<{ ok: boolean; message: string; cantidad: number }>(`/notificaciones/${estudianteId}/borrar-todas`, { method: 'DELETE' }),
 };
 
 // ─── US-13: Servicio de Sugerencias ──────────────────────────────────────────

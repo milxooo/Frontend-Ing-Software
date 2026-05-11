@@ -5,7 +5,7 @@ import React, { useState } from 'react';
  */
 const ProfileSettings: React.FC = () => {
   const [transportTime, setTransportTime] = useState(45);
-  const [blockedZones, setBlockedZones] = useState([
+  const [blockedZones, _setBlockedZones] = useState([
     { day: 'Lunes', start: '08:00', end: '12:00', label: 'Trabajo' },
     { day: 'Miércoles', start: '18:00', end: '22:00', label: 'Entrenamiento' }
   ]);
