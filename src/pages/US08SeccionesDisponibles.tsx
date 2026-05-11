@@ -13,8 +13,10 @@ const PROF_IMAGES = [
 ];
 
 const SUBJECT_DETAILS: Record<string, any> = {
-  "5": { title: "Calculus III", code: "MATH-301", desc: "Funciones multivariadas, derivadas parciales, integrales múltiples y análisis vectorial. Explore secciones alternativas y gestione intercambios de cupos de inscripción." },
-  "1": { title: "Intro to Programming", code: "CS-101", desc: "Fundamentos de lógica, algoritmos y estructuras de datos en lenguajes de alto nivel." },
+  "MAT101": { title: "Cálculo I", code: "MAT-101", desc: "Límites, derivadas y aplicaciones de la derivada en funciones de una variable." },
+  "FIS101": { title: "Física Mecánica", code: "FIS-101", desc: "Cinemática, dinámica y leyes de conservación para sistemas de partículas." },
+  "PROG101": { title: "Fundamentos de Programación", code: "PROG-101", desc: "Introducción al pensamiento algorítmico y estructuras básicas de datos." },
+  "MAT102": { title: "Cálculo II", code: "MAT-102", desc: "Integrales, sucesiones y series infinitas." },
 };
 
 const US08SeccionesDisponibles: React.FC = () => {
@@ -57,10 +59,10 @@ const US08SeccionesDisponibles: React.FC = () => {
             <div className="relative">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
               <input 
-                type="number" 
+                type="text" 
                 value={materiaId}
                 onChange={(e) => setMateriaId(e.target.value)}
-                placeholder="Ingrese ID de materia para escanear disponibilidad..." 
+                placeholder="Ingrese código o nombre de materia (ej: MAT101)..." 
                 className="w-full bg-slate-950/50 border border-white/10 rounded-2xl pl-12 pr-6 py-4 text-sm text-white focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-600"
               />
             </div>
