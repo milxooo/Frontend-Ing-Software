@@ -86,7 +86,7 @@ const ScheduleManager: React.FC = () => {
   const handleGenerate = async () => {
     setIsLoading(true);
     try {
-      const data = await generateScheduleProposals('santiago-123');
+      const data = await generateScheduleProposals('santiago-123', {});
       if (data && Array.isArray(data.proposals)) {
         setProposals(data.proposals);
         if (data.proposals.length > 0) setActiveId(data.proposals[0].id);

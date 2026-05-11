@@ -17,7 +17,6 @@ interface Subject {
 const SyncHub: React.FC = () => {
   const [studentId, setStudentId] = useState('');
   const [token, setToken] = useState('');
-  const [institution, setInstitution] = useState('sap');
   const [syncMethod, setSyncMethod] = useState<'api' | 'vision'>('vision');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

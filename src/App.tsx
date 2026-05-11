@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import { isAuthenticated, logout, getCurrentUser } from './services/auth.service';
+import { isAuthenticated, logout } from './services/auth.service';
 import type { AuthUser } from './services/auth.service';
 
 /**
@@ -11,19 +11,17 @@ import type { AuthUser } from './services/auth.service';
  */
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'login' | 'dashboard'>('landing');
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
   // Check for existing session on mount
   useEffect(() => {
     if (isAuthenticated()) {
-      setCurrentUser(getCurrentUser());
       setView('dashboard');
     } else {
       setView('landing');
     }
   }, []);
 
-  // Simple route guardian: if we try to go to dashboard without auth, go to login
+  // Simple route guardian
   useEffect(() => {
     if (view === 'dashboard' && !isAuthenticated()) {
       setView('login');
@@ -33,14 +31,12 @@ const App: React.FC = () => {
     }
   }, [view]);
 
-  const handleLoginSuccess = (user: AuthUser) => {
-    setCurrentUser(user);
+  const handleLoginSuccess = (_user: AuthUser) => {
     setView('dashboard');
   };
 
   const handleLogout = () => {
     logout();
-    setCurrentUser(null);
     setView('landing');
   };
 

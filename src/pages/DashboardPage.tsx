@@ -2,18 +2,17 @@ import React, { useState } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import ScheduleManager from '../features/schedule/ScheduleManager';
 import SwapMarket from '../features/marketplace/SwapMarket';
-import ProfileSettings from '../features/profile/ProfileSettings';
-import UserProfile from '../features/profile/UserProfile';
 import SyncHub from '../features/sync/SyncHub';
 import FormalizationCertificate from '../features/swaps/FormalizationCertificate';
 import HelpCenter from '../features/help/HelpCenter';
 import EnrollmentManager from '../features/enrollment/EnrollmentManager';
-import { AcademicPriority } from '../features/academic-priority/AcademicPriority';
-import PrioritySelection from '../pages/US07PriorizacionAcademica';
-import US08SeccionesDisponibles from '../pages/US08SeccionesDisponibles';
-import US09IntercambioSecciones from '../pages/US09IntercambioSecciones';
-import US13Sugerencias from '../pages/US13Sugerencias';
-import { SmartMatch } from '../features/academic-priority/SmartMatch';
+
+// US Components
+import US01Profile from './US01Profile';
+import US08SeccionesDisponibles from './US08SeccionesDisponibles';
+import US09IntercambioSecciones from './US09IntercambioSecciones';
+import US13Sugerencias from './US13Sugerencias';
+import PrioritySelection from './US07PriorizacionAcademica';
 
 /**
  * OptimaAcademia Dashboard Page
@@ -77,9 +76,6 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       case 'swaps':
         return <US09IntercambioSecciones />;
 
-      case 'scheduler':
-        return <SmartMatch />;
-
       case 'marketplace':
         return <SwapMarket />;
 
@@ -87,23 +83,28 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         return <ScheduleManager />;
 
       case 'profile':
-        return (
-          <div className="space-y-12">
-            <UserProfile />
-            <div className="border-t border-white/5 pt-12">
-              <ProfileSettings />
-            </div>
-          </div>
-        );
-
-      case 'documents':
-        return <EnrollmentManager />;
+        return <US01Profile />;
 
       case 'suggestions':
         return <US13Sugerencias />;
 
+      case 'documents':
+        return (
+          <FormalizationCertificate 
+            matchId="SW-98234-MART"
+            studentA="Roberto A. Martínez"
+            studentB="Elena L. García"
+            subjectA="Criptografía I"
+            subjectB="Sistemas Distribuidos"
+            status="APROBADO"
+          />
+        );
+
       case 'help':
         return <HelpCenter />;
+
+      case 'enrollment':
+        return <EnrollmentManager />;
 
       default:
         return (
