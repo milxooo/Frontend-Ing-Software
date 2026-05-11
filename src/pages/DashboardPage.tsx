@@ -9,7 +9,10 @@ import FormalizationCertificate from '../features/swaps/FormalizationCertificate
 import HelpCenter from '../features/help/HelpCenter';
 import EnrollmentManager from '../features/enrollment/EnrollmentManager';
 import { AcademicPriority } from '../features/academic-priority/AcademicPriority';
-import { PrioritySelection } from '../features/academic-priority/PrioritySelection';
+import PrioritySelection from '../pages/US07PriorizacionAcademica';
+import US08SeccionesDisponibles from '../pages/US08SeccionesDisponibles';
+import US09IntercambioSecciones from '../pages/US09IntercambioSecciones';
+import US13Sugerencias from '../pages/US13Sugerencias';
 import { SmartMatch } from '../features/academic-priority/SmartMatch';
 
 /**
@@ -66,12 +69,15 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         return <SyncHub />;
 
       case 'priority':
-        return <AcademicPriority />;
-
-      case 'sections':
         return <PrioritySelection />;
 
+      case 'sections':
+        return <US08SeccionesDisponibles />;
+
       case 'swaps':
+        return <US09IntercambioSecciones />;
+
+      case 'scheduler':
         return <SmartMatch />;
 
       case 'marketplace':
@@ -91,22 +97,13 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         );
 
       case 'documents':
-        return (
-          <FormalizationCertificate 
-            matchId="SW-98234-MART"
-            studentA="Roberto A. Martínez"
-            studentB="Elena L. García"
-            subjectA="Criptografía I"
-            subjectB="Sistemas Distribuidos"
-            status="APROBADO"
-          />
-        );
+        return <EnrollmentManager />;
+
+      case 'suggestions':
+        return <US13Sugerencias />;
 
       case 'help':
         return <HelpCenter />;
-
-      case 'enrollment':
-        return <EnrollmentManager />;
 
       default:
         return (

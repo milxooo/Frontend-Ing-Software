@@ -121,4 +121,32 @@ export const notificacionesService = {
   }
 };
 
+/* ── US-13: Sugerencias Inteligentes ── */
+export type TipoSugerencia = 'CURSO_CORTO' | 'EVENTO_CULTURAL';
+
+export interface TiempoLibreAPI {
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface SugerenciaAPI {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  tipo: TipoSugerencia;
+  campus: string;
+  dias: string[];
+  horaInicio: string;
+  horaFin: string;
+  duracionHoras: number;
+  esGratuita: boolean;
+}
+
+export const sugerenciasService = {
+  getPorTiempoLibre: async (tiemposLibres: TiempoLibreAPI[]) => {
+    return api.post<SugerenciaAPI[]>('/sugerencias/match', { tiemposLibres });
+  }
+};
+
 export default api;
