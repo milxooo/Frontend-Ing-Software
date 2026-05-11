@@ -67,6 +67,12 @@ export const saveSyncData = async (studentId: string, records: any[]) => {
   return response.data;
 };
 
+/* ── US-05: Arquitecto de Horarios (IA) ── */
+export const generateScheduleProposals = async (studentId: string) => {
+  const response = await api.get(`/scheduler/proposals/${studentId}`);
+  return response.data;
+};
+
 /* ── US-10: Confirmación de Intercambios (PATCH) ── */
 export const confirmSwapMatch = async (matchId: string, studentId: string) => {
   const response = await api.patch(`/swaps/confirm`, { matchId, studentId });
