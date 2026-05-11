@@ -38,7 +38,6 @@ api.interceptors.response.use(
     }
     if (error.response?.status === 401) {
       console.error('Sesión expirada o inválida');
-      // Podríamos redirigir al login aquí si fuera necesario
     }
     return Promise.reject(error);
   }
@@ -68,8 +67,8 @@ export const saveSyncData = async (studentId: string, records: any[]) => {
 };
 
 /* ── US-05: Arquitecto de Horarios (IA) ── */
-export const generateScheduleProposals = async (studentId: string) => {
-  const response = await api.get(`/scheduler/proposals/${studentId}`);
+export const generateScheduleProposals = async (studentId: string, preferences: any = {}) => {
+  const response = await api.post('/scheduler/proposals', { studentId, preferences });
   return response.data;
 };
 
@@ -101,34 +100,40 @@ export const sendChatMessage = async (sessionId: string, message: string) => {
   return response.data;
 };
 
-/* ── US-12/15: Sistema de Notificaciones ── */
+/* ── US-12/15/16: Sistema de Notificaciones ── */
+export type NotificacionAPI = {
+  id: string;
+  mensaje: string;
+  tipo: 'MATCH' | 'STATUS_CHANGE' | 'SYSTEM' | 'URGENTE' | 'INTERCAMBIO';
+  estado: 'LEIDA' | 'NO_LEIDA';
+  fecha: string;
+};
+
 export const notificacionesService = {
   getAll: async (studentId: string) => {
-    const response = await api.get(`/notificaciones/${studentId}`);
+    const response = await api.get<{ ok: boolean; data: NotificacionAPI[] }>(`/notificaciones/${studentId}`);
     return response.data;
   },
-  marcarLeida: async (id: number) => {
-    const response = await api.patch(`/notificaciones/${id}/leida`);
+  getNoLeidas: async (studentId: string) => {
+    const response = await api.get<{ ok: boolean; count: number }>(`/notificaciones/${studentId}/no-leidas`);
+    return response.data;
+  },
+  marcarLeida: async (id: string) => {
+    const response = await api.patch<{ ok: boolean }>(`/notificaciones/${id}/leida`);
     return response.data;
   },
   marcarTodasLeidas: async (studentId: string) => {
-    const response = await api.patch(`/notificaciones/${studentId}/leer-todas`);
+    const response = await api.patch<{ ok: boolean }>(`/notificaciones/${studentId}/leer-todas`);
     return response.data;
   },
   borrarTodas: async (studentId: string) => {
-    const response = await api.delete(`/notificaciones/${studentId}`);
+    const response = await api.delete<{ ok: boolean }>(`/notificaciones/${studentId}/borrar-todas`);
     return response.data;
   }
 };
 
-/* ── US-13: Sugerencias Inteligentes ── */
+/* ── US-13: Arquitecto de Sugerencias (AI) ── */
 export type TipoSugerencia = 'CURSO_CORTO' | 'EVENTO_CULTURAL';
-
-export interface TiempoLibreAPI {
-  dia: string;
-  horaInicio: string;
-  horaFin: string;
-}
 
 export interface SugerenciaAPI {
   id: string;
@@ -143,9 +148,16 @@ export interface SugerenciaAPI {
   esGratuita: boolean;
 }
 
+export interface TiempoLibreAPI {
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+}
+
 export const sugerenciasService = {
   getPorTiempoLibre: async (tiemposLibres: TiempoLibreAPI[]) => {
-    return api.post<SugerenciaAPI[]>('/sugerencias/match', { tiemposLibres });
+    const response = await api.post<{ ok: boolean; data: SugerenciaAPI[] }>('/sugerencias/por-tiempo', { tiemposLibres });
+    return response.data;
   }
 };
 
