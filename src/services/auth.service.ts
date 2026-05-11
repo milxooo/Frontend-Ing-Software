@@ -36,10 +36,11 @@ export const login = async (email: string, password: string): Promise<LoginRespo
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.error || 'Error al iniciar sesión');
+    throw new Error(result.error || result.message || 'Error al iniciar sesión');
   }
 
-  const loginData = result.data as LoginResponse;
+  // Manejar tanto { data: { token, user } } como { token, user } directamente
+  const loginData = (result.data || result) as LoginResponse;
 
   // Guardar en localStorage
   localStorage.setItem(TOKEN_KEY, loginData.token);
