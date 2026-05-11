@@ -95,10 +95,4 @@ export const sendChatMessage = async (sessionId: string, message: string) => {
   return response.data;
 };
 
-/* ── US-05: Generación de Propuestas de Horario ── */
-export const generateScheduleProposals = async (studentId: string) => {
-  const response = await api.post('/schedule/generate', { studentId });
-  return response.data;
-};
-
 export default api;

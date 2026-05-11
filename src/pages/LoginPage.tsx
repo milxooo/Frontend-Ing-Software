@@ -231,7 +231,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-12 bg-slate-950 border-t border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
+      <footer class="w-full py-12 bg-slate-950 border-t border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div>OptimaAcademia</div>
           <div className="flex gap-8">
