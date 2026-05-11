@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import NotificationCenter from '../features/notifications/NotificationCenter';
+import { getCurrentUser } from '../services/auth.service';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,12 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSection, onNavigate, onLogout }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const user = getCurrentUser();
+
+  // Obtener iniciales
+  const initials = user?.fullName
+    ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : '??';
   
   const menuItems = [
     { id: 'overview', label: 'Resumen', icon: 'dashboard' },
@@ -21,6 +28,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
     { id: 'marketplace', label: 'Mercado Swaps [US-10/11]', icon: 'swap_horiz' },
     { id: 'documents', label: 'Documentos Oficiales [US-11]', icon: 'verified_user' },
     { id: 'profile', label: 'Mi Perfil [US-01/03]', icon: 'person' },
+    { id: 'help', label: 'Centro de Ayuda [US-17]', icon: 'help_center' },
+    { id: 'enrollment', label: 'Gestión Matrícula [US-18]', icon: 'app_registration' },
   ];
 
   return (
@@ -59,12 +68,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
         <div className="p-6 mt-auto">
           <div className="bg-surface-container rounded-3xl p-4 border border-white/5 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-tertiary flex items-center justify-center text-white font-bold">
-                SP
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-tertiary flex items-center justify-center text-white font-bold text-xs">
+                {initials}
               </div>
               <div className="grow overflow-hidden">
-                <div className="text-sm font-bold text-white truncate">Santiago Parra</div>
-                <div className="text-xs text-on-surface-variant truncate">Estudiante Ingeniería</div>
+                <div className="text-sm font-bold text-white truncate">{user?.fullName || 'Estudiante'}</div>
+                <div className="text-xs text-on-surface-variant truncate">{user?.program || 'Invitado'}</div>
               </div>
             </div>
           </div>

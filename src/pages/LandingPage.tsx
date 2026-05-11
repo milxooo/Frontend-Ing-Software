@@ -45,7 +45,7 @@ const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
             
             <h1 className="font-display text-6xl md:text-[9rem] leading-[0.9] mb-10 tracking-tighter text-white font-extrabold">
               Horarios.<br/>
-              <span className="bg-gradient-to-r from-primary via-indigo-400 to-primary bg-clip-text text-transparent italic font-light">Inteligentes.</span>
+              <span className="bg-linear-to-r from-primary via-indigo-400 to-primary bg-clip-text text-transparent italic font-light">Inteligentes.</span>
             </h1>
             
             <p className="text-slate-400 max-w-2xl mx-auto mb-14 text-xl md:text-2xl leading-relaxed font-medium">
@@ -72,7 +72,7 @@ const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               alt="Background logic" 
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8z3Cz8Rn7YRkHNKufTKaFnMbYTqBZoULdY0uJpvB7myo3c495Doj2VAmEp0JA4H0XZFLZsTw2YvlqCdzP7L1hDypDld4UxMn0wpDy16TfE1xTU8e9raXAvoc37GAFBuQ4mYKZ5TtYoNoSMFhGDm4Mk5EmH57UjzUSV_EQ2D51xBQT8ant5lmAkjQvsPSCzFMQmiueGkO0dfjmbHMXrsijcep-sOQ3bv7Yhayl3WovrZ6fKHDz1zueOMJLIG17aCDe-zCr9jkQRqg"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-transparent to-transparent"></div>
           </div>
         </section>
 
@@ -137,8 +137,8 @@ const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
         {/* CTA Section */}
         <section className="py-60 px-6">
-          <div className="max-w-7xl mx-auto rounded-[4rem] bg-gradient-to-br from-primary via-indigo-950 to-slate-950 p-16 md:p-32 text-center relative overflow-hidden border border-white/10 shadow-3xl">
-            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+          <div className="max-w-7xl mx-auto rounded-[4rem] bg-linear-to-br from-primary via-indigo-950 to-slate-950 p-16 md:p-32 text-center relative overflow-hidden border border-white/10 shadow-3xl">
+            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
             <div className="relative z-10">
               <h2 className="font-display text-5xl md:text-[6rem] text-white mb-12 tracking-tighter leading-none font-black">¿Listo para optimizar tu carrera?</h2>
               <p className="text-white/70 text-2xl md:text-3xl max-w-3xl mx-auto mb-20 font-medium">

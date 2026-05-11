@@ -246,7 +246,7 @@ const ScheduleManager: React.FC = () => {
             <button 
               key={p.id}
               onClick={() => setActiveId(p.id)}
-              className={`shrink-0 min-w-[260px] p-6 rounded-[2rem] transition-all duration-500 text-left border-2 group ${
+              className={`shrink-0 min-w-[260px] p-6 rounded-4xl transition-all duration-500 text-left border-2 group ${
                 activeId === p.id 
                   ? 'border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/20' 
                   : 'border-white/5 bg-slate-950/40 hover:border-white/20'
@@ -268,7 +268,7 @@ const ScheduleManager: React.FC = () => {
               </div>
             </button>
           )) : (
-            <div className="w-full p-12 text-center bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 text-slate-500 italic flex flex-col items-center gap-4">
+            <div className="w-full p-12 text-center bg-white/5 rounded-4xl border-2 border-dashed border-white/10 text-slate-500 italic flex flex-col items-center gap-4">
               <span className="material-symbols-outlined text-5xl opacity-20">inventory_2</span>
               Pulsa el botón flotante para optimizar tu semestre.
             </div>

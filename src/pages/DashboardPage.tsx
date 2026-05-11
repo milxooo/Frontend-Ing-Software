@@ -3,8 +3,14 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import ScheduleManager from '../features/schedule/ScheduleManager';
 import SwapMarket from '../features/marketplace/SwapMarket';
 import ProfileSettings from '../features/profile/ProfileSettings';
+import UserProfile from '../features/profile/UserProfile';
 import SyncHub from '../features/sync/SyncHub';
 import FormalizationCertificate from '../features/swaps/FormalizationCertificate';
+import HelpCenter from '../features/help/HelpCenter';
+import EnrollmentManager from '../features/enrollment/EnrollmentManager';
+import { AcademicPriority } from '../features/academic-priority/AcademicPriority';
+import { PrioritySelection } from '../features/academic-priority/PrioritySelection';
+import { SmartMatch } from '../features/academic-priority/SmartMatch';
 
 /**
  * OptimaAcademia Dashboard Page
@@ -59,6 +65,15 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       case 'academic':
         return <SyncHub />;
 
+      case 'priority':
+        return <AcademicPriority />;
+
+      case 'sections':
+        return <PrioritySelection />;
+
+      case 'swaps':
+        return <SmartMatch />;
+
       case 'marketplace':
         return <SwapMarket />;
 
@@ -66,7 +81,14 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         return <ScheduleManager />;
 
       case 'profile':
-        return <ProfileSettings />;
+        return (
+          <div className="space-y-12">
+            <UserProfile />
+            <div className="border-t border-white/5 pt-12">
+              <ProfileSettings />
+            </div>
+          </div>
+        );
 
       case 'documents':
         return (
@@ -79,6 +101,12 @@ const DashboardPage: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
             status="APROBADO"
           />
         );
+
+      case 'help':
+        return <HelpCenter />;
+
+      case 'enrollment':
+        return <EnrollmentManager />;
 
       default:
         return (

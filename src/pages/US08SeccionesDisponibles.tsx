@@ -31,7 +31,8 @@ const US08SeccionesDisponibles: React.FC = () => {
     setHasSearched(true);
     
     try {
-      const response = await fetch(`http://localhost:8080/api/secciones/${materiaId}/disponibles`);
+      const baseUrl = import.meta.env.VITE_JAVA_API_URL || 'http://localhost:8080/api';
+      const response = await fetch(`${baseUrl}/secciones/${materiaId}/disponibles`);
       if (!response.ok) throw new Error('Error al conectar con el servidor');
       const data = await response.json();
       setSections(data);

@@ -1,72 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LandingPage from './pages/LandingPage';
-import DashboardLayout from './layouts/DashboardLayout';
-import SyncHub from './features/sync/SyncHub';
-import ScheduleManager from './features/schedule/ScheduleManager';
-import SwapMarket from './features/marketplace/SwapMarket';
-import FormalizationCertificate from './features/swaps/FormalizationCertificate';
-import US08SeccionesDisponibles from './pages/US08SeccionesDisponibles';
-import US09IntercambioSecciones from './pages/US09IntercambioSecciones';
-import { AcademicPriority } from './features/academic-priority';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import { isAuthenticated, logout, getCurrentUser } from './services/auth.service';
+import type { AuthUser } from './services/auth.service';
 
-type ViewType = 'landing' | 'sync' | 'priority' | 'schedule' | 'inbox' | 'formalize' | 'profile' | 'sections' | 'swaps';
-
+/**
+ * OptimaAcademia App Entry Point
+ * Manages the top-level navigation flow: Landing -> Login -> Dashboard.
+ */
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewType>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'dashboard'>('landing');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
-  if (view === 'landing') {
-    return <LandingPage onStart={() => setView('sync')} />;
-  }
+  // Check for existing session on mount
+  useEffect(() => {
+    if (isAuthenticated()) {
+      setCurrentUser(getCurrentUser());
+      setView('dashboard');
+    } else {
+      setView('landing');
+    }
+  }, []);
 
-  const handleNavigate = (id: string) => {
-    if (id === 'academic') setView('sync');
-    else if (id === 'priority') setView('priority');
-    else if (id === 'sections') setView('sections');
-    else if (id === 'swaps') setView('swaps');
-    else if (id === 'scheduler') setView('schedule');
-    else if (id === 'marketplace') setView('inbox');
-    else if (id === 'documents') setView('formalize');
-    else if (id === 'profile') setView('profile');
-    else setView('sync'); 
+  // Simple route guardian: if we try to go to dashboard without auth, go to login
+  useEffect(() => {
+    if (view === 'dashboard' && !isAuthenticated()) {
+      setView('login');
+    }
+    if ((view === 'login' || view === 'landing') && isAuthenticated()) {
+      setView('dashboard');
+    }
+  }, [view]);
+
+  const handleLoginSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    setView('dashboard');
   };
 
-  return (
-    <DashboardLayout 
-      activeSection={
-        view === 'sync' ? 'academic' : 
-        view === 'priority' ? 'priority' :
-        view === 'sections' ? 'sections' :
-        view === 'swaps' ? 'swaps' :
-        view === 'schedule' ? 'scheduler' : 
-        view === 'inbox' ? 'marketplace' : 
-        view === 'formalize' ? 'documents' : 'profile'
-      } 
-      onNavigate={handleNavigate}
-      onLogout={() => setView('landing')}
-    >
-      {view === 'sync' && <SyncHub />}
-      {view === 'priority' && <AcademicPriority />}
-      {view === 'sections' && <US08SeccionesDisponibles />}
-      {view === 'swaps' && <US09IntercambioSecciones />}
-      {view === 'schedule' && <ScheduleManager />}
-      {view === 'inbox' && <SwapMarket />}
-      {view === 'formalize' && (
-        <FormalizationCertificate 
-          matchId="SW-98234-MART"
-          studentA="Roberto A. Martínez"
-          studentB="Elena L. García"
-          subjectA="Criptografía I"
-          subjectB="Sistemas Distribuidos"
-          status="APROBADO"
-        />
-      )}
-      {view === 'profile' && (
-        <div className="flex items-center justify-center min-h-[60vh] text-slate-500 italic">
-          Configuraciones de Perfil (US-01/03) cargando...
-        </div>
-      )}
-    </DashboardLayout>
-  );
+  const handleLogout = () => {
+    logout();
+    setCurrentUser(null);
+    setView('landing');
+  };
+
+  // View Switcher logic
+  switch (view) {
+    case 'landing':
+      return <LandingPage onStart={() => setView('login')} />;
+    case 'login':
+      return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    case 'dashboard':
+      return <DashboardPage onLogout={handleLogout} />;
+    default:
+      return <LandingPage onStart={() => setView('login')} />;
+  }
 };
 
 export default App;
