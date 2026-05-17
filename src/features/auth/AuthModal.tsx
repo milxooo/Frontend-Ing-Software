@@ -84,6 +84,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       setGooglePassword('');
       setGoogleStep(1);
       setGoogleError('');
+    } else {
+      // Check if we are opening because of a password reset link
+      if (window.location.pathname === '/reset-password') {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        if (token) {
+          setResetToken(token);
+          setScreen('reset_password');
+        }
+      }
     }
   }, [isOpen]);
 

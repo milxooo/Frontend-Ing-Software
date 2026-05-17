@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import LandingPage from './pages/LandingPage';
 import DashboardLayout from './layouts/DashboardLayout';
 import SyncHub from './features/sync/SyncHub';
@@ -132,6 +132,10 @@ const App: React.FC = () => {
     };
 
     handleSSORedirect();
+
+    if (window.location.pathname === '/reset-password') {
+      setIsAuthOpen(true);
+    }
   }, []);
 
   const handleStart = () => {

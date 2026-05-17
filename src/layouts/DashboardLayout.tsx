@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import NotificationCenter from '../features/notifications/NotificationCenter';
-import { getCurrentUser } from '../services/auth.service';
-
 interface User {
   name: string;
   email: string;
@@ -31,8 +29,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
     { id: 'documents', label: 'Documentos Oficiales [US-11]', icon: 'verified_user' },
     { id: 'suggestions', label: 'Sugerencias [US-13]', icon: 'lightbulb' },
     { id: 'profile', label: 'Mi Perfil [US-01/03]', icon: 'person' },
-    { id: 'help', label: 'Centro de Ayuda [US-17]', icon: 'help_center' },
-    { id: 'enrollment', label: 'Gestión Matrícula [US-18]', icon: 'app_registration' },
   ];
 
   return (

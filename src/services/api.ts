@@ -100,66 +100,7 @@ export const sendChatMessage = async (sessionId: string, message: string) => {
   return response.data;
 };
 
-/* ── US-12/15/16: Sistema de Notificaciones ── */
-export type NotificacionAPI = {
-  id: string;
-  mensaje: string;
-  tipo: 'MATCH' | 'STATUS_CHANGE' | 'SYSTEM' | 'URGENTE' | 'INTERCAMBIO';
-  estado: 'LEIDA' | 'NO_LEIDA';
-  fecha: string;
-};
 
-export const notificacionesService = {
-  getAll: async (studentId: string) => {
-    const response = await api.get<{ ok: boolean; data: NotificacionAPI[] }>(`/notificaciones/${studentId}`);
-    return response.data;
-  },
-  getNoLeidas: async (studentId: string) => {
-    const response = await api.get<{ ok: boolean; count: number }>(`/notificaciones/${studentId}/no-leidas`);
-    return response.data;
-  },
-  marcarLeida: async (id: string) => {
-    const response = await api.patch<{ ok: boolean }>(`/notificaciones/${id}/leida`);
-    return response.data;
-  },
-  marcarTodasLeidas: async (studentId: string) => {
-    const response = await api.patch<{ ok: boolean }>(`/notificaciones/${studentId}/leer-todas`);
-    return response.data;
-  },
-  borrarTodas: async (studentId: string) => {
-    const response = await api.delete<{ ok: boolean }>(`/notificaciones/${studentId}/borrar-todas`);
-    return response.data;
-  }
-};
-
-/* ── US-13: Arquitecto de Sugerencias (AI) ── */
-export type TipoSugerencia = 'CURSO_CORTO' | 'EVENTO_CULTURAL';
-
-export interface SugerenciaAPI {
-  id: string;
-  titulo: string;
-  descripcion: string;
-  tipo: TipoSugerencia;
-  campus: string;
-  dias: string[];
-  horaInicio: string;
-  horaFin: string;
-  duracionHoras: number;
-  esGratuita: boolean;
-}
-
-export interface TiempoLibreAPI {
-  dia: string;
-  horaInicio: string;
-  horaFin: string;
-}
-
-export const sugerenciasService = {
-  getPorTiempoLibre: async (tiemposLibres: TiempoLibreAPI[]) => {
-    const response = await api.post<{ ok: boolean; data: SugerenciaAPI[] }>('/sugerencias/por-tiempo', { tiemposLibres });
-    return response.data;
-  }
-};
 
 export default api;
 
@@ -197,19 +138,19 @@ export interface TiempoLibreAPI {
   horaFin: string;
 }
 
-// Helper fetch interno
+// Helper fetch interno (usando axios para interceptores)
 async function apiFetch<T>(path: string, init?: { method?: string; body?: string }): Promise<T> {
-  const res = await fetch(`http://localhost:3000/api${path}`, {
-    method: init?.method ?? 'GET',
-    headers: { 'Content-Type': 'application/json' },
-    body: init?.body,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: 'Error desconocido' }));
-    const errMsg = (err as any).error || (err as any).message || `HTTP ${res.status}`;
+  try {
+    const res = await api({
+      url: path,
+      method: init?.method ?? 'GET',
+      data: init?.body ? JSON.parse(init.body) : undefined,
+    });
+    return res.data;
+  } catch (error: any) {
+    const errMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Error desconocido';
     throw new Error(errMsg);
   }
-  return res.json() as Promise<T>;
 }
 
 // ─── US-16: Servicio de Notificaciones ───────────────────────────────────────
