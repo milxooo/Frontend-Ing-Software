@@ -83,7 +83,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     if (!notif || notif.estado === 'LEIDA') return;
 
     try {
-      await notificacionesService.marcarLeida(id.toString());
+      await notificacionesService.marcarLeida(id);
     } catch { /* optimistic update igual */ }
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, estado: 'LEIDA' as const } : n));
     onUnreadCountChange?.(Math.max(0, unreadCount - 1));
