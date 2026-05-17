@@ -108,7 +108,8 @@ async function apiFetch<T>(path: string, init?: { method?: string; body?: string
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: 'Error desconocido' }));
-    throw new Error((err as { message?: string }).message ?? `HTTP ${res.status}`);
+    const errMsg = (err as any).error || (err as any).message || `HTTP ${res.status}`;
+    throw new Error(errMsg);
   }
   return res.json() as Promise<T>;
 }
@@ -150,4 +151,43 @@ export const sugerenciasService = {
     const q = tipo ? `?tipo=${tipo}` : '';
     return apiFetch<{ ok: boolean; count: number; data: SugerenciaAPI[] }>(`/sugerencias/gratuitas${q}`);
   },
+};
+
+// ─── US-17 & US-18: Servicio de Autenticación ───────────────────────────────
+export const authService = {
+  login: async (emailInstitucional: string, password?: string) =>
+    apiFetch<{ success: boolean; message: string; data: { token: string; student: any } }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ emailInstitucional, password }),
+    }),
+
+  register: async (data: any) =>
+    apiFetch<{ success: boolean; message: string; data: any }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  forgotPassword: async (emailInstitucional: string) =>
+    apiFetch<{ success: boolean; message: string; data: { token: string; resetLink: string } }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ emailInstitucional }),
+    }),
+
+  resetPassword: async (token: string, newPassword?: string) =>
+    apiFetch<{ success: boolean; message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    }),
+
+  ssoCallback: async (emailInstitucional: string, nombreCompleto: string) =>
+    apiFetch<{ success: boolean; message: string; data: { token: string; student: any } }>('/auth/sso/callback', {
+      method: 'POST',
+      body: JSON.stringify({ emailInstitucional, nombreCompleto }),
+    }),
+
+  googleCallback: async (email: string, nombreCompleto: string) =>
+    apiFetch<{ success: boolean; message: string; data: { token: string; student: any } }>('/auth/google/callback', {
+      method: 'POST',
+      body: JSON.stringify({ email, nombreCompleto }),
+    })
 };

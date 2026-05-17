@@ -4,7 +4,7 @@ import React from 'react';
  * OptimaAcademia Landing Page - Architect Edition
  * Ubicación: src/pages/LandingPage.tsx
  */
-const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
+const LandingPage: React.FC<{ onStart: () => void; onLoginClick: () => void }> = ({ onStart, onLoginClick }) => {
   return (
     <div className="min-h-screen font-body antialiased">
       {/* TopNavBar */}
@@ -18,10 +18,15 @@ const LandingPage: React.FC<{ onStart: () => void }> = ({ onStart }) => {
             <a className="text-slate-400 font-semibold hover:text-white transition-all duration-300" href="#">Precios</a>
           </div>
           <div className="flex items-center gap-4">
-            <button className="text-slate-400 font-bold px-4 py-2 hover:text-white transition-colors">Entrar</button>
+            <button 
+              onClick={onLoginClick}
+              className="text-slate-400 font-bold px-4 py-2 hover:text-white transition-colors cursor-pointer"
+            >
+              Entrar
+            </button>
             <button 
               onClick={onStart}
-              className="bg-primary text-white px-8 py-2.5 rounded-full font-bold scale-100 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
+              className="bg-primary text-slate-950 px-8 py-2.5 rounded-full font-bold scale-100 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 cursor-pointer"
             >
               Empezar
             </button>

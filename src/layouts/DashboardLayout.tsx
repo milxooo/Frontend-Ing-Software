@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import NotificationCenter from '../features/notifications/NotificationCenter';
 
+interface User {
+  name: string;
+  email: string;
+  role: string;
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   activeSection: string;
   onNavigate: (section: string) => void;
   onLogout: () => void;
+  user?: User | null;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSection, onNavigate, onLogout }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSection, onNavigate, onLogout, user }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   
@@ -60,12 +67,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeSecti
         <div className="p-6 mt-auto">
           <div className="bg-surface-container rounded-3xl p-4 border border-white/5 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-tertiary flex items-center justify-center text-white font-bold">
-                SP
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-tertiary flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {user ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'SP'}
               </div>
               <div className="grow overflow-hidden">
-                <div className="text-sm font-bold text-white truncate">Santiago Parra</div>
-                <div className="text-xs text-on-surface-variant truncate">Estudiante Ingeniería</div>
+                <div className="text-sm font-bold text-white truncate">{user ? user.name : 'Santiago Parra'}</div>
+                <div className="text-xs text-on-surface-variant truncate">{user ? user.role : 'Estudiante Ingeniería'}</div>
               </div>
             </div>
           </div>
